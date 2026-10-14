@@ -21,6 +21,7 @@ namespace py = pybind11;
 class MultiGame
 {
 private:
+
   size_t GAME_AMOUNT = 8;
 
   std::vector<RLEnv> games;

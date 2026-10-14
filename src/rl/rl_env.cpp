@@ -36,6 +36,8 @@ std::array<std::array<int, 9>, 41> RLEnv::testStep()
 
   std::array<std::array<int, 9>, 41> state_attempts;
 
+  Game snapshot = game_env;
+
   for (int i = actions_start; i < actions_end + 1; i++)
   {
 
@@ -45,7 +47,8 @@ std::array<std::array<int, 9>, 41> RLEnv::testStep()
 
     state_attempts[i] = getGameState();
 
-    game_env.getBoard().setTetrominoCellsStates(CellState::EMPTY, game_env.getLastPiecePlacedPositions());
+    // game_env.getBoard().setTetrominoCellsStates(CellState::EMPTY, game_env.getLastPiecePlacedPositions());
+    game_env = snapshot;
   }
 
   return state_attempts;
@@ -84,10 +87,26 @@ StepData RLEnv::calculateReward()
   {
     getGameEnv().piece_set = false;
 
-    int lines = getGameEnv().getBoard().clearLines();
+    int lines = getGameEnv().getLinesClearedLast();
     int total_height = getGameEnv().getBoard().getAggregateHeight();
     int total_holes = getGameEnv().getBoard().getAmountOfHoles();
     int rugosity = getGameEnv().getBoard().getRugosity();
+
+    // if (lines > 0)
+    // {
+
+    //   std::cout << "Lines = " << std::endl;
+    //   std::cout << lines << std::endl;
+
+    //   std::cout << "Total height = " << std::endl;
+    //   std::cout << total_height << std::endl;
+
+    //   std::cout << "Total holes = " << std::endl;
+    //   std::cout << total_holes << std::endl;
+
+    //   std::cout << "Rugosity = " << std::endl;
+    //   std::cout << rugosity << std::endl;
+    // }
 
     float reward =
         (lines * LINES_CLEARED_WEIGHT) -

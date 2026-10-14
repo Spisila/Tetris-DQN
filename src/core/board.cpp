@@ -186,7 +186,7 @@ void Board::moveTetrominoToColumn(int column)
 
     if (column > spawn_x_position)
     {
-        for (int i = 0; i < spawn_x_position + (column - spawn_x_position); i++)
+        for (int i = 0; i < column - spawn_x_position; i++)
         {
             moveTetromino(MovementDirection::RIGHT);
         }

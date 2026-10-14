@@ -25,30 +25,32 @@ class Game
 {
 private:
   int id;
-
+  
   bool gravity_on = false;
   int gravity_counter = 0;
   int gravity_ticks = 30;
-
+  
   Board game_board{};
   PieceQueue piece_queue{};
-
+  
   int lines_cleared = 0;
-
+  int lines_cleared_last = 0;
+  
   int score = 0;
-
+  
   std::array<Position, 4> last_piece_placed_positions{
-      Position(0, 0),
-      Position(0, 0),
-      Position(0, 0),
-      Position(0, 0)};
+    Position(0, 0),
+    Position(0, 0),
+    Position(0, 0),
+    Position(0, 0)};
 
 public:
   Actions next_action{Actions::HOLD};
   PreciseActions next_precise_action{PreciseActions::HOLD};
-
+  
   bool lost = false;
   bool piece_set = false;
+  
 
   int hold_piece_index = -1;
   bool hold_used = false;
@@ -60,6 +62,7 @@ public:
   int getId() const;
 
   int getClearedLines();
+  int getLinesClearedLast() const ;
 
   int getScore();
 

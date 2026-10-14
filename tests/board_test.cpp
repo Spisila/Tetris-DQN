@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <board.hpp>
+#include <game.hpp>
 
 TEST(BoardTests, moveTetromino_validMove)
 {
@@ -201,18 +202,27 @@ TEST(BoardTests, clearLines_LinesCleared)
 {
 
     Board b{};
-    auto board = b.getBoardCells();
-
-    for (int i = 0; i < BOARD_SIZE_X; i++)
+    for (int line = BOARD_SIZE_Y - 4; line < BOARD_SIZE_Y; line++)
     {
+        for (int column = 0; column < 8; column += 4)
+        {
+            std::array<Position, 4> positions{
+                Position{column, line},
+                Position{column + 1, line},
+                Position{column + 2, line},
+                Position{column + 3, line}};
+            b.setTetrominoCellsStates(CellState::FILLED, positions);
+        }
 
-        board[0][i] = CellState::FILLED;
-        board[1][i] = CellState::FILLED;
-        board[2][i] = CellState::FILLED;
-        board[3][i] = CellState::FILLED;
+        std::array<Position, 4> remaining_positions{
+            Position{8, line},
+            Position{9, line},
+            Position{8, line},
+            Position{9, line}};
+        b.setTetrominoCellsStates(CellState::FILLED, remaining_positions);
     }
 
-    EXPECT_EQ(1000, b.clearLines());
+    EXPECT_EQ(4, b.clearLines());
 }
 
 TEST(BoardTests, clearLines_noLinesCleared)

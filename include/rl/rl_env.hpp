@@ -3,6 +3,7 @@
 #include <types.hpp>
 #include <game.hpp>
 
+// TODO: Pass these to python for testing
 constexpr float LOSS_SCORE_WEIGHT = -100.0f;
 constexpr float LINES_CLEARED_WEIGHT = 200.0f;
 constexpr float TOTAL_HEIGHT_WEIGHT = 0.5f;
@@ -24,7 +25,7 @@ public:
 
   void takePreciseAction(PreciseActions action);
 
-  std::array<std::array<int, 9>,41> testStep();
+  std::array<std::array<int, 9>, 41> testStep();
 
   void step();
   void reset();

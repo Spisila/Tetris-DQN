@@ -148,7 +148,19 @@ int Game::pieceWasSet()
     piece_set = true;
     hold_used = false;
     piece_queue.updatePieceQueue();
-    return game_board.clearLines();
+
+    int lines = game_board.clearLines();
+    lines_cleared_last = lines;
+
+    // if (lines > 0)
+    // {
+    //     std::cout << lines_cleared_last << std::endl;
+    // }
+    return lines;
+}
+
+int Game::getLinesClearedLast() const  {
+    return lines_cleared_last;
 }
 
 void Game::holdCurrentPiece()
