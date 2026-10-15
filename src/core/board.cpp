@@ -112,14 +112,188 @@ int Board::getRugosity() const
     return rugosity;
 }
 
-const std::array<int, 3> Board::getBoardState() const
+int Board::getRowTransitions() const
+{
+    int transitions = 0;
+
+    for (int y = 0; y < BOARD_SIZE_Y; y++)
+    {
+        CellState previous = CellState::FILLED; // parede esquerda conta como preenchida
+
+        for (int x = 0; x < BOARD_SIZE_X; x++)
+        {
+            bool current_filled = (board[x][y] == CellState::FILLED);
+            bool previous_filled = (previous == CellState::FILLED);
+
+            if (current_filled != previous_filled)
+            {
+                transitions++;
+            }
+
+            previous = board[x][y];
+        }
+
+        if (previous != CellState::FILLED) // parede direita conta como preenchida
+        {
+            transitions++;
+        }
+    }
+
+    return transitions;
+}
+
+int Board::getColumnTransitions() const
+{
+    int transitions = 0;
+
+    for (int x = 0; x < BOARD_SIZE_X; x++)
+    {
+        CellState previous = CellState::EMPTY; // nada acima da primeira linha
+
+        for (int y = 0; y < BOARD_SIZE_Y; y++)
+        {
+            bool current_filled = (board[x][y] == CellState::FILLED);
+            bool previous_filled = (previous == CellState::FILLED);
+
+            if (current_filled != previous_filled)
+            {
+                transitions++;
+            }
+
+            previous = board[x][y];
+        }
+
+        if (previous != CellState::FILLED) // chão conta como preenchido
+        {
+            transitions++;
+        }
+    }
+
+    return transitions;
+}
+
+int Board::getWellSums() const
+{
+    int well_sum = 0;
+
+    for (int x = 0; x < BOARD_SIZE_X; x++)
+    {
+        int well_depth = 0;
+
+        for (int y = 0; y < BOARD_SIZE_Y; y++)
+        {
+            bool is_empty = (board[x][y] != CellState::FILLED);
+            bool left_filled = (x == 0) ? true : (board[x - 1][y] == CellState::FILLED);
+            bool right_filled = (x == BOARD_SIZE_X - 1) ? true : (board[x + 1][y] == CellState::FILLED);
+
+            if (is_empty && left_filled && right_filled)
+            {
+                well_depth++;
+                well_sum += well_depth;
+            }
+            else
+            {
+                well_depth = 0;
+            }
+        }
+    }
+
+    return well_sum;
+}
+
+float Board::calculateLandingHeight(const std::array<Position, 4> &piece_positions) const
+{
+    float avg_y = 0.0f;
+
+    for (const Position &pos : piece_positions)
+    {
+        avg_y += static_cast<float>(pos.y);
+    }
+
+    avg_y /= static_cast<float>(piece_positions.size());
+
+    return static_cast<float>(BOARD_SIZE_Y - 1) - avg_y;
+}
+
+int Board::calculateErodedPieceCells(const std::array<Position, 4> &piece_positions) const
+{
+    std::array<int, 4> touched_rows{};
+    int touched_count = 0;
+
+    for (const Position &pos : piece_positions)
+    {
+        bool already_seen = false;
+
+        for (int i = 0; i < touched_count; i++)
+        {
+            if (touched_rows[i] == pos.y)
+            {
+                already_seen = true;
+                break;
+            }
+        }
+
+        if (!already_seen)
+        {
+            touched_rows[touched_count++] = pos.y;
+        }
+    }
+
+    int rows_cleared = 0;
+    int piece_cells_eliminated = 0;
+
+    for (int i = 0; i < touched_count; i++)
+    {
+        int row = touched_rows[i];
+        bool row_full = true;
+
+        for (int x = 0; x < BOARD_SIZE_X; x++)
+        {
+            if (board[x][row] != CellState::FILLED)
+            {
+                row_full = false;
+                break;
+            }
+        }
+
+        if (!row_full)
+        {
+            continue;
+        }
+
+        rows_cleared++;
+
+        for (const Position &pos : piece_positions)
+        {
+            if (pos.y == row)
+            {
+                piece_cells_eliminated++;
+            }
+        }
+    }
+
+    return rows_cleared * piece_cells_eliminated;
+}
+
+const std::array<int, 4> Board::getBoardState() const
 {
 
-    int agg_height = getAggregateHeight();
-    int holes = getAmountOfHoles();
-    int rugosity = getRugosity();
+    // int agg_height = getAggregateHeight();
+    // int holes = getAmountOfHoles();
+    // int rugosity = getRugosity();
 
-    std::array<int, 3> data_basic = {agg_height, holes, rugosity};
+    // std::array<int, 3> data_basic = {agg_height, holes, rugosity};
+
+    int row_transitions = getRowTransitions();
+    int column_transitions = getColumnTransitions();
+    int holes = getAmountOfHoles();
+    int wells = getWellSums();
+
+    std::array<int, 4> data_basic = {
+        row_transitions,
+        column_transitions,
+        holes,
+        wells};
 
     return data_basic;
 }
@@ -227,10 +401,10 @@ void Board::rotateTetrominoToRotation(int rotation)
     //     return;
     // }
 
-    for (int i = 0; i < rotation; i++) {
+    for (int i = 0; i < rotation; i++)
+    {
         rotateTetromino(Rotation::CLOCKWISE);
     }
-
 
     assert(fail_counter < 10 && "Failed to rotate piece to rotation");
 }

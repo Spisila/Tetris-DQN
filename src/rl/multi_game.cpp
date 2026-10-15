@@ -123,11 +123,11 @@ void MultiGame::stepThis(int index, Actions _action)
 // 9  = state values
 // 41 = Possible actions
 // 8 = Amount of games (not dynamic)
-std::array<std::array<std::array<int, 9>,41>, 8> 
+std::array<std::array<std::array<int, 12>,41>, 8> 
 MultiGame::lookAheadAll()
 {
 
-  std::array<std::array<std::array<int, 9>,41>, 8> look_ahead = {};
+  std::array<std::array<std::array<int, 12>,41>, 8> look_ahead = {};
 
   for (int i = 0; i < 8; i++) {
     look_ahead[i] = games[i].testStep();
@@ -173,7 +173,7 @@ int MultiGame::getLinesCleared()
   return sum;
 }
 
-std::vector<std::array<int, 9>> MultiGame::getStates()
+std::vector<std::array<int, 12>> MultiGame::getStates()
 {
   return states_cache;
 }

@@ -38,7 +38,7 @@ private:
 
 
 public:
-  std::vector<std::array<int, 9>> states_cache;
+  std::vector<std::array<int, 12>> states_cache;
 
   MultiGame(size_t parallel_game_count);
   ~MultiGame();
@@ -49,7 +49,7 @@ public:
   void stepThis(int index, Actions _action);
 
   // TODO: Make it work with variable game amount
-  std::array<std::array<std::array<int, 9>,41>, 8>  lookAheadAll();
+  std::array<std::array<std::array<int, 12>,41>, 8>  lookAheadAll();
 
   void resetAll();
   void resetThis(int index);
@@ -60,7 +60,7 @@ public:
   int getSumScore();
   int getLinesCleared();
 
-  std::vector<std::array<int, 9>> getStates();
+  std::vector<std::array<int, 12>> getStates();
 
   void initGraphics();
   void render(std::string &generation_counter);

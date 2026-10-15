@@ -139,6 +139,9 @@ int Game::pieceWasSet()
 
     std::copy(std::begin(tetromino_positions), std::end(tetromino_positions), std::begin(last_piece_placed_positions));
 
+    last_landing_height = game_board.calculateLandingHeight(tetromino_positions);
+    last_eroded_piece_cells = game_board.calculateErodedPieceCells(tetromino_positions);
+
     if (!game_board.setPiece(next_piece_in_queue))
     {
         gameLost();
@@ -152,14 +155,21 @@ int Game::pieceWasSet()
     int lines = game_board.clearLines();
     lines_cleared_last = lines;
 
-    // if (lines > 0)
-    // {
-    //     std::cout << lines_cleared_last << std::endl;
-    // }
     return lines;
 }
 
-int Game::getLinesClearedLast() const  {
+float Game::getLastLandingHeight() const
+{
+    return last_landing_height;
+}
+
+int Game::getLastErodedPieceCells() const
+{
+    return last_eroded_piece_cells;
+}
+
+int Game::getLinesClearedLast() const
+{
     return lines_cleared_last;
 }
 

@@ -30,12 +30,22 @@ public:
   // Getters
 
   std::array<std::array<CellState, BOARD_SIZE_Y>, BOARD_SIZE_X> getBoardCells() const;
+
   std::array<int, BOARD_SIZE_X> getBoardHeight() const;
-  int getAggregateHeight() const;
   int getAmountOfHoles() const;
   int getRugosity() const;
-  const std::array<int, 3> getBoardState() const;
+  int getRowTransitions() const;
+  int getColumnTransitions() const;
+  int getWellSums() const;
 
+  float calculateLandingHeight(const std::array<Position, 4> &piece_positions) const;
+  int calculateErodedPieceCells(const std::array<Position, 4> &piece_positions) const;
+  
+  
+  const std::array<int, 4> getBoardState() const;
+  
+  int getAggregateHeight() const;
+  
   Tetromino &getBoardTetromino();
   const Tetromino &getBoardTetromino() const;
 

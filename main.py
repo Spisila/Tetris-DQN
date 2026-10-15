@@ -32,18 +32,36 @@ def get_all_current_state(games: Tetris_AGENT.MultiGame) :
 
     for i in range(len(state_data)) :
 
-        scaled_height = sigmoid_scale(state_data[i][0], 30)
-        scaled_holes = sigmoid_scale(state_data[i][1], 5)
-        scaled_rugosity = sigmoid_scale(state_data[i][2], 10)
-        scaled_current_piece = state_data[i][3] / 6
+        # scaled_height = sigmoid_scale(state_data[i][0], 30)
+        # scaled_holes = sigmoid_scale(state_data[i][1], 5)
+        # scaled_rugosity = sigmoid_scale(state_data[i][2], 10)
+        # scaled_current_piece = state_data[i][3] / 6
         
-        queue_tensor = torch.tensor(state_data[i][4:])
+        landing_height = sigmoid_scale(state_data[i][0], 10)
+        eroded_cells =sigmoid_scale( state_data[i][1], 10)
+        row_transitions = sigmoid_scale(state_data[i][2], 10)
+        column_transitions = sigmoid_scale(state_data[i][3], 10)
+        holes = sigmoid_scale(state_data[i][4], 10)
+        wells = sigmoid_scale(state_data[i][5], 10)
+        scaled_current_piece = state_data[i][6] / 6
+
+        queue_tensor = torch.tensor(state_data[i][7:])
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()
 
-        concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
+        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
 
+        concat = np.concatenate([
+            [landing_height], 
+            [eroded_cells], 
+            [row_transitions], 
+            [column_transitions], 
+            [holes], 
+            [wells], 
+            [scaled_current_piece], 
+            flat_hot_one])
+        
         scaled_states.append(concat)
 
     return scaled_states
@@ -54,19 +72,47 @@ def scale_test_states(tests) :
 
     for i in range(len(tests)) :
 
-        scaled_height = sigmoid_scale(tests[i][0], 30)
-        scaled_holes = sigmoid_scale(tests[i][1], 5)
-        scaled_rugosity = sigmoid_scale(tests[i][2], 10)
-        scaled_current_piece = tests[i][3] / 6
+        # scaled_height = sigmoid_scale(tests[i][0], 30)
+        # scaled_holes = sigmoid_scale(tests[i][1], 5)
+        # scaled_rugosity = sigmoid_scale(tests[i][2], 10)
+        # scaled_current_piece = tests[i][3] / 6
         
-        queue_tensor = torch.tensor(tests[i][4:])
+        # queue_tensor = torch.tensor(tests[i][4:])
+        # hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
+
+        # flat_hot_one = hot_one_piece_queue.flatten()
+
+        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
+
+        # scaled_tests.append(concat)
+
+        landing_height = sigmoid_scale(tests[i][0])
+        eroded_cells = sigmoid_scale(tests[i][1])
+        row_transitions = sigmoid_scale(tests[i][2])
+        column_transitions = sigmoid_scale(tests[i][3])
+        holes = sigmoid_scale(tests[i][4])
+        wells = sigmoid_scale(tests[i][5])
+        scaled_current_piece = tests[i][6] / 6
+
+        queue_tensor = torch.tensor(tests[i][7:])
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()
 
-        concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
+        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
 
+        concat = np.concatenate([
+            [landing_height], 
+            [eroded_cells], 
+            [row_transitions], 
+            [column_transitions], 
+            [holes], 
+            [wells], 
+            [scaled_current_piece], 
+            flat_hot_one])
+        
         scaled_tests.append(concat)
+
 
     return scaled_tests
 
@@ -126,11 +172,11 @@ NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
 LOG_PATH = "logs/training_metrics.csv"
-LOG_TRAINING_IN_EPISODES = 10
+LOG_TRAINING_IN_EPISODES = 100
 
 WATCH_TRANING = True
 
-INPUT_DIMENSIONS = 39
+INPUT_DIMENSIONS = 42
 OUTPUT_DIMENSIONS = 41
 
 EPSILON_MIN = 0.05

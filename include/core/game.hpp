@@ -36,6 +36,9 @@ private:
   int lines_cleared = 0;
   int lines_cleared_last = 0;
   
+  float last_landing_height = 0.0f;
+  int last_eroded_piece_cells = 0;
+
   int score = 0;
   
   std::array<Position, 4> last_piece_placed_positions{
@@ -62,7 +65,10 @@ public:
   int getId() const;
 
   int getClearedLines();
-  int getLinesClearedLast() const ;
+  int getLinesClearedLast() const;
+
+  float getLastLandingHeight() const;
+  int getLastErodedPieceCells() const;
 
   int getScore();
 

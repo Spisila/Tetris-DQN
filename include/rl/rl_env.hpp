@@ -21,11 +21,11 @@ public:
 
   Game &getGameEnv();
   int getGameEnvID() const;
-  std::array<int, 9> getGameState();
+  std::array<int, 12> getGameState();
 
   void takePreciseAction(PreciseActions action);
 
-  std::array<std::array<int, 9>, 41> testStep();
+  std::array<std::array<int, 12>, 41> testStep();
 
   void step();
   void reset();
