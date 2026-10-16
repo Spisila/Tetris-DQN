@@ -98,6 +98,7 @@ StepData RLEnv::calculateReward()
     //     (total_holes * HOLES_WEIGHT) -
     //     (rugosity * RUGOSITY_WEIGHT);
 
+    int lines = getGameEnv().getLinesClearedLast();
     int landing_height = getGameEnv().getLastLandingHeight();
     int eroded_cells = getGameEnv().getLastErodedPieceCells();
     int row_transitions = getGameEnv().getBoard().getRowTransitions();
@@ -106,6 +107,7 @@ StepData RLEnv::calculateReward()
     int wells = getGameEnv().getBoard().getWellSums();
 
     float reward =
+        (lines * LINES_CLEARED_WEIGHT) +
         (-1 * landing_height) +
         (1 * eroded_cells) +
         (-1 * row_transitions) +

@@ -3,6 +3,8 @@ import os
 import csv
 import time
 
+from python.timer import Timer
+
 class EpisodeLogger:
 
     log_counter = 0
@@ -11,9 +13,9 @@ class EpisodeLogger:
     pieces_placed_sum = 0
     lines_cleared_sum = 0
 
-    interval_timer = 0
+    timer = Timer()
 
-    def __init__(self, log_counter_max, log_path):
+    def __init__(self, log_counter_max, log_path, data_logs):
         self.log_counter_max = log_counter_max
         self.log_path = log_path
 
@@ -22,28 +24,8 @@ class EpisodeLogger:
         
         with open(self.log_path, mode='w', newline='') as f:
             writer = csv.writer(f)
-            action_headers = [f"a_{i}_count" for i in range(41)]
-            writer.writerow([
-                "time_between_intervals", 
-                "episode_interval", 
-                "placed_total", 
-                "pieces_placed_interval", 
-                "lines_total", 
-                "lines_interval", 
-                "epsilon"] + action_headers
-                )
+            writer.writerow(data_logs)
 
-
-    @classmethod
-    def start_timer(cls) :
-        cls.interval_timer = time.perf_counter()
-
-    @classmethod
-    def restart_timer(cls) :
-        end_time = time.perf_counter()
-        elapsed = end_time - cls.interval_timer
-        cls.interval_timer = end_time
-        return elapsed
 
     @classmethod
     def increase_log_counter(cls) :
@@ -68,9 +50,9 @@ class EpisodeLogger:
         cls.reset_log_counter()
 
 
-    def csv_log_episode(cls, pieces_placed, lines_cleared, action_selection_counts, epsilon) :
+    def csv_log(cls, pieces_placed, lines_cleared, action_selection_counts, epsilon) :
 
-        row = [cls.restart_timer(),
+        row = [cls.timer.restart_timer(),
                cls.episode_count, 
                cls.pieces_placed_sum, 
                pieces_placed, 
@@ -82,7 +64,7 @@ class EpisodeLogger:
             writer = csv.writer(f)
             writer.writerow(row)
 
-        cls.restart_timer()
+        cls.timer.restart_timer()
 
     def check_should_console_log_episodes(self, 
                                           pieces_placed, 
@@ -96,7 +78,7 @@ class EpisodeLogger:
                 pieces_placed=pieces_placed, 
                 lines_cleared=lines_cleared
                 )
-            self.csv_log_episode(
+            self.csv_log(
                 pieces_placed=pieces_placed, 
                 lines_cleared=lines_cleared, 
                 action_selection_counts=action_selection_counts, 

@@ -172,9 +172,9 @@ NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
 LOG_PATH = "logs/training_metrics.csv"
-LOG_TRAINING_IN_EPISODES = 100
+LOG_TRAINING_IN_EPISODES = 10
 
-WATCH_TRANING = True
+WATCH_TRANING = False
 
 INPUT_DIMENSIONS = 42
 OUTPUT_DIMENSIONS = 41
@@ -194,7 +194,6 @@ criterion    = nn.MSELoss()
 buffer         = ReplayBuffer()
 epsilon_greedy = EpsilonGreedy(output_size=OUTPUT_DIMENSIONS, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
 
-logger  = EpisodeLogger(LOG_TRAINING_IN_EPISODES, log_path=LOG_PATH)
 
 action_selection_counts = np.zeros(OUTPUT_DIMENSIONS, dtype=int)
 
@@ -209,7 +208,20 @@ pieces_placed_counter = 0
 games.resetAll()
 state = np.array(get_all_current_state(games), dtype=np.float32)
 
-logger.start_timer()
+main_logs = [
+            "time_between_intervals", 
+            "episode_interval", 
+            "placed_total", 
+            "pieces_placed_interval", 
+            "lines_total", 
+            "lines_interval", 
+            "epsilon"
+            ]
+
+action_headers = [f"a_{i}_count" for i in range(41)]
+
+main_logger = EpisodeLogger(LOG_TRAINING_IN_EPISODES, log_path=LOG_PATH, data_logs=main_logs)
+main_logger.timer.start_timer()
 
 while True:
 
@@ -217,13 +229,14 @@ while True:
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
-    if logger.check_should_console_log_episodes(
+    if main_logger.check_should_console_log_episodes(
         pieces_placed=pieces_placed, 
         lines_cleared=games.getLinesCleared(), 
         action_selection_counts=action_selection_counts,
         epsilon=epsilon_greedy.epsilon
         ) :
         sum_action_count = 0
+    
     watcher.check_should_watch_episodes()
 
     look_ahead = games.lookAheadAll()
@@ -256,8 +269,6 @@ while True:
             action_selection_counts[greedy] += 1
 
 
-
-
     action_enums = []
 
     for i in range(len(action_indexes)) :
@@ -285,10 +296,16 @@ while True:
 
         if step_i.lost :
             games.resetThis(i)
-            logger.increase_log_counter()
+            main_logger.increase_log_counter()
             
     for i in range(len(state)) :
-        buffer.push(state[i], action_enums[i].value, step_data[i].reward, next_state[i], step_data[i].lost)
+        buffer.push(
+            state[i], 
+            action_enums[i].value, 
+            step_data[i].reward, 
+            next_state[i], 
+            step_data[i].lost
+            )
     
     state = next_state
 
