@@ -16,6 +16,9 @@ from python.episode_logger import EpisodeLogger
 from python.episode_watcher import EpisodeWatcher
 from python.epsilon_greedy import EpsilonGreedy
 
+from python.counter import Counter
+from python.timer import Timer
+
 agent_path = os.path.abspath("./Release")
 sys.path.append(agent_path)
 
@@ -203,7 +206,11 @@ action_count     = 0
 sum_action_count = 0
 
 pieces_placed         = 0
+pieces_placed_sum     = 0
 pieces_placed_counter = 0
+
+episode_interval = 0
+placed_total = 0
 
 games.resetAll()
 state = np.array(get_all_current_state(games), dtype=np.float32)
@@ -211,9 +218,7 @@ state = np.array(get_all_current_state(games), dtype=np.float32)
 main_logs = [
             "time_between_intervals", 
             "episode_interval", 
-            "placed_total", 
             "pieces_placed_interval", 
-            "lines_total", 
             "lines_interval", 
             "epsilon"
             ]
@@ -221,21 +226,17 @@ main_logs = [
 action_headers = [f"a_{i}_count" for i in range(41)]
 
 main_logger = EpisodeLogger(LOG_TRAINING_IN_EPISODES, log_path=LOG_PATH, data_logs=main_logs)
-main_logger.timer.start_timer()
+
+log_counter = Counter(LOG_TRAINING_IN_EPISODES)
+
+interval_timer = Timer()
+interval_timer.start_timer()
 
 while True:
 
     action_count = 0
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
-    
-    if main_logger.check_should_console_log_episodes(
-        pieces_placed=pieces_placed, 
-        lines_cleared=games.getLinesCleared(), 
-        action_selection_counts=action_selection_counts,
-        epsilon=epsilon_greedy.epsilon
-        ) :
-        sum_action_count = 0
     
     watcher.check_should_watch_episodes()
 
@@ -296,7 +297,17 @@ while True:
 
         if step_i.lost :
             games.resetThis(i)
-            main_logger.increase_log_counter()
+            episode_interval += 1
+            if log_counter.increase_counter() :
+                log_data = [
+                    interval_timer.restart_timer(),
+                    episode_interval,
+                    pieces_placed,
+                    games.getLinesCleared(),
+                    epsilon_greedy.epsilon
+                ]
+                main_logger.csv_log(log_data=log_data)
+                sum_action_count = 0
             
     for i in range(len(state)) :
         buffer.push(
