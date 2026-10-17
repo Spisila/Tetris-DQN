@@ -156,7 +156,7 @@ def format_float(f, digits=3) :
 print("Started")
 
 NUM_NEURONS = 128
-NUM_GAMES   = 32
+NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
 ACTION_SPACE_SIZE = 41

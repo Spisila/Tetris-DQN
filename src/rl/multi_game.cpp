@@ -141,7 +141,7 @@ void MultiGame::stepThis(int index, Actions _action)
 
 // 12  = state values
 // 41  = Possible actions
-const std::vector<std::array<std::array<int, 12>, 41>>& MultiGame::lookAheadAll()
+const std::vector<std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE>>& MultiGame::lookAheadAll()
 {
 
   for (size_t i = 0; i < games.size(); i++)

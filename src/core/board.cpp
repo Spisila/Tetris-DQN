@@ -278,12 +278,6 @@ int Board::calculateErodedPieceCells(const std::array<Position, 4> &piece_positi
 const std::array<int, 4> Board::getBoardState() const
 {
 
-    // int agg_height = getAggregateHeight();
-    // int holes = getAmountOfHoles();
-    // int rugosity = getRugosity();
-
-    // std::array<int, 3> data_basic = {agg_height, holes, rugosity};
-
     int row_transitions = getRowTransitions();
     int column_transitions = getColumnTransitions();
     int holes = getAmountOfHoles();

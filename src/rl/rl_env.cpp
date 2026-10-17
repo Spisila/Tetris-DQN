@@ -28,13 +28,13 @@ void RLEnv::takePreciseAction(PreciseActions action)
   }
 }
 
-std::array<std::array<int, 12>, 41> RLEnv::testStep()
+std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> RLEnv::testStep()
 {
 
   int actions_start = static_cast<int>(PreciseActions::ROTATION_0_COLUMN_0);
   int actions_end = static_cast<int>(PreciseActions::HOLD);
 
-  std::array<std::array<int, 12>, 41> state_attempts;
+  std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> state_attempts;
 
   Game snapshot = game_env;
 
@@ -122,10 +122,10 @@ int RLEnv::getGameEnvID() const
   return game_env.getId();
 }
 
-std::array<int, 12> RLEnv::getGameState()
+std::array<int, STATE_SIZE> RLEnv::getGameState()
 {
 
-  std::array<int, 12> state = {};
+  std::array<int, STATE_SIZE> state = {};
 
   int landing_height = game_env.getLastLandingHeight();
   int eroded_cells = game_env.getLastErodedPieceCells();
