@@ -28,13 +28,13 @@ void RLEnv::takePreciseAction(PreciseActions action)
   }
 }
 
-std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> RLEnv::testStep()
+std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE> RLEnv::testStep()
 {
 
   int actions_start = static_cast<int>(PreciseActions::ROTATION_0_COLUMN_0);
   int actions_end = static_cast<int>(PreciseActions::HOLD);
 
-  std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> state_attempts;
+  std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE> state_attempts;
 
   Game snapshot = game_env;
 
@@ -47,7 +47,6 @@ std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> RLEnv::testStep()
 
     state_attempts[i] = getGameState();
 
-    // game_env.getBoard().setTetrominoCellsStates(CellState::EMPTY, game_env.getLastPiecePlacedPositions());
     game_env = snapshot;
   }
 
@@ -88,7 +87,7 @@ StepData RLEnv::calculateReward()
     getGameEnv().piece_set = false;
 
     int lines = getGameEnv().getLinesClearedLast();
-    int landing_height = getGameEnv().getLastLandingHeight();
+    float landing_height = getGameEnv().getLastLandingHeight();
     int eroded_cells = getGameEnv().getLastErodedPieceCells();
     int row_transitions = getGameEnv().getBoard().getRowTransitions();
     int column_transitions = getGameEnv().getBoard().getColumnTransitions();
@@ -122,12 +121,12 @@ int RLEnv::getGameEnvID() const
   return game_env.getId();
 }
 
-std::array<int, STATE_SIZE> RLEnv::getGameState()
+std::array<float, STATE_SIZE> RLEnv::getGameState()
 {
 
-  std::array<int, STATE_SIZE> state = {};
+  std::array<float, STATE_SIZE> state = {};
 
-  int landing_height = game_env.getLastLandingHeight();
+  float landing_height = game_env.getLastLandingHeight();
   int eroded_cells = game_env.getLastErodedPieceCells();
 
   state[0] = landing_height;

@@ -17,7 +17,6 @@ MultiGame::MultiGame(size_t parallel_game_count)
 
   running = true;
 
-  
   for (int i = 0; i < GAME_AMOUNT; i++)
   {
     states_cache.push_back(games[i].getGameState());
@@ -139,7 +138,7 @@ void MultiGame::stepThis(int index, Actions _action)
   games[index].step();
 }
 
-const std::vector<std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE>>& MultiGame::lookAheadAll()
+const std::vector<std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE>>& MultiGame::lookAheadAll()
 {
 
   for (size_t i = 0; i < games.size(); i++)
@@ -185,7 +184,7 @@ int MultiGame::getLinesCleared()
   return sum;
 }
 
-std::vector<std::array<int, 12>> MultiGame::getStates()
+std::vector<std::array<float, 12>> MultiGame::getStates()
 {
   return states_cache;
 }

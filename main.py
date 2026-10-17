@@ -42,10 +42,10 @@ def get_all_current_state(games: Tetris_AGENT.MultiGame) :
         holes = sigmoid_scale(state_data[i][4], 10)
         wells = sigmoid_scale(state_data[i][5], 10)
         
-        current_piece_tensor = torch.tensor(state_data[i][6])
+        current_piece_tensor = torch.tensor(state_data[i][6], dtype=torch.long)
         hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
 
-        queue_tensor = torch.tensor(state_data[i][7:])
+        queue_tensor = torch.tensor(state_data[i][7:], dtype=torch.long)
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()
@@ -77,10 +77,10 @@ def scale_test_states(tests) :
         holes = sigmoid_scale(tests[i][4])
         wells = sigmoid_scale(tests[i][5])
 
-        current_piece_tensor = torch.tensor(tests[i][6])
+        current_piece_tensor = torch.tensor(tests[i][6], dtype=torch.long)
         hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
 
-        queue_tensor = torch.tensor(tests[i][7:])
+        queue_tensor = torch.tensor(tests[i][7:], dtype=torch.long)
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()

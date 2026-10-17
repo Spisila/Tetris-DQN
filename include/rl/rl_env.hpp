@@ -17,11 +17,11 @@ public:
 
   Game &getGameEnv();
   int getGameEnvID() const;
-  std::array<int, STATE_SIZE> getGameState();
+  std::array<float, STATE_SIZE> getGameState();
 
   void takePreciseAction(PreciseActions action);
 
-  std::array<std::array<int, STATE_SIZE>, ACTION_SPACE_SIZE> testStep();
+  std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE> testStep();
 
   void step();
   void reset();
