@@ -24,23 +24,26 @@ private:
 
   size_t GAME_AMOUNT = 8;
 
-  std::vector<RLEnv> games;
-
   std::barrier<> barrier;
+  std::vector<RLEnv> games;
   
   std::vector<std::span<RLEnv>> segments;
   std::vector<std::thread> game_workers;
   
   GameRenderer renderer;
 
+  std::vector<std::array<std::array<int, 12>, 41>> look_ahead_cache;
 
   bool running{false};
+
+  static std::size_t getThreadCount();
+  static std::vector<RLEnv> createGames(size_t count);
 
 
 public:
   std::vector<std::array<int, 12>> states_cache;
 
-  MultiGame(size_t parallel_game_count);
+  explicit MultiGame(size_t parallel_game_count);
   ~MultiGame();
 
   void threadLoop(size_t thread_segment_index);
@@ -49,7 +52,7 @@ public:
   void stepThis(int index, Actions _action);
 
   // TODO: Make it work with variable game amount
-  std::array<std::array<std::array<int, 12>,41>, 8>  lookAheadAll();
+  const std::vector<std::array<std::array<int, 12>, 41>>& lookAheadAll();
 
   void resetAll();
   void resetThis(int index);

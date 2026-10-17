@@ -156,7 +156,7 @@ def format_float(f, digits=3) :
 print("Started")
 
 NUM_NEURONS = 128
-NUM_GAMES   = 8
+NUM_GAMES   = 16
 SET_TARGET_IN_ACTIONS = 500
 
 ACTION_SPACE_SIZE = 41
@@ -204,7 +204,8 @@ main_logs = [
             "lines_interval", 
             "lines_per_piece",
             "epsilon",
-            "loss"
+            "loss",
+            "rewards_interval"
             ]
 
 action_headers = [f"a_{i}_count" for i in range(41)]
@@ -227,10 +228,12 @@ episode_interval = 0
 
 total_training_time = 0
 
-action_count = 8
+action_count = NUM_GAMES
 output_count = 41
 
 log_loss = 0
+
+log_rewards = 0
 
 while True:
 
@@ -283,6 +286,7 @@ while True:
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
+        log_rewards += step_i.reward
 
         if step_i.piece_placed :
 
@@ -319,11 +323,13 @@ while True:
                     lines_cleared_interval,
                     format_float(lines_cleared_interval / placed_interval),
                     format_float(epsilon_greedy.epsilon),
-                    log_loss
+                    log_loss,
+                    log_rewards
                 ]
                 main_logger.csv_log(log_data=log_data)
 
                 pieces_placed_interval = 0
+                log_rewards = 0
             
     for i in range(len(state)) :
         buffer.push(

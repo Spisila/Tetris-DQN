@@ -7,34 +7,29 @@ namespace py = pybind11;
 #include <rl/multi_game.hpp>
 
 MultiGame::MultiGame(size_t parallel_game_count)
-    : barrier(std::thread::hardware_concurrency() + 1),
-      games([](size_t count)
-            { 
-          std::vector<RLEnv> v; 
-          v.reserve(count); 
-          return v; }(parallel_game_count)),
-      renderer((games.emplace_back(0), games[0].getGameEnv()))
+    : barrier(getThreadCount()),
+      games(createGames(parallel_game_count)),
+      renderer(games[0].getGameEnv())
 {
 
-  states_cache.push_back(games[0].getGameState());
-
   GAME_AMOUNT = parallel_game_count;
+  look_ahead_cache.resize(GAME_AMOUNT);
 
   running = true;
 
-  unsigned int num_cores = std::thread::hardware_concurrency();
-
-  for (int i = 1; i < GAME_AMOUNT; i++)
+  
+  for (int i = 0; i < GAME_AMOUNT; i++)
   {
-    games.emplace_back(i);
     states_cache.push_back(games[i].getGameState());
   }
 
-  int segment_size = GAME_AMOUNT / num_cores;
+  unsigned int num_cores = std::thread::hardware_concurrency();
+  size_t active_threads = std::min(static_cast<size_t>(num_cores), GAME_AMOUNT);
+  size_t segment_size = GAME_AMOUNT / num_cores;
 
   std::span<RLEnv> game_view{games};
 
-  for (size_t i = 0; i < num_cores; i++)
+  for (size_t i = 0; i < active_threads; i++)
   {
 
     if (i == num_cores - 1)
@@ -64,6 +59,30 @@ MultiGame::~MultiGame()
       worker.join();
     }
   }
+}
+
+std::size_t MultiGame::getThreadCount()
+{
+  auto cores = std::thread::hardware_concurrency();
+  return (cores == 0 ? 1 : cores) + 1;
+}
+
+std::vector<RLEnv> MultiGame::createGames(size_t count)
+{
+  if (count == 0)
+  {
+    throw std::invalid_argument("parallel_game_count deve ser maior que 0.");
+  }
+
+  std::vector<RLEnv> envs;
+  envs.reserve(count);
+
+  for (size_t i = 0; i < count; ++i)
+  {
+    envs.emplace_back(i);
+  }
+
+  return envs;
 }
 
 void MultiGame::threadLoop(size_t thread_segment_index)
@@ -120,23 +139,18 @@ void MultiGame::stepThis(int index, Actions _action)
   games[index].step();
 }
 
-// 9  = state values
-// 41 = Possible actions
-// 8 = Amount of games (not dynamic)
-std::array<std::array<std::array<int, 12>,41>, 8> 
-MultiGame::lookAheadAll()
+// 12  = state values
+// 41  = Possible actions
+const std::vector<std::array<std::array<int, 12>, 41>>& MultiGame::lookAheadAll()
 {
 
-  std::array<std::array<std::array<int, 12>,41>, 8> look_ahead = {};
-
-  for (int i = 0; i < 8; i++) {
-    look_ahead[i] = games[i].testStep();
+  for (size_t i = 0; i < games.size(); i++)
+  {
+    look_ahead_cache[i] = games[i].testStep();
   }
 
-  return look_ahead;
-
+  return look_ahead_cache;
 }
-
 
 void MultiGame::resetAll()
 {
