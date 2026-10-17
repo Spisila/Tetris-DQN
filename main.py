@@ -34,11 +34,6 @@ def get_all_current_state(games: Tetris_AGENT.MultiGame) :
     scaled_states = []
 
     for i in range(len(state_data)) :
-
-        # scaled_height = sigmoid_scale(state_data[i][0], 30)
-        # scaled_holes = sigmoid_scale(state_data[i][1], 5)
-        # scaled_rugosity = sigmoid_scale(state_data[i][2], 10)
-        # scaled_current_piece = state_data[i][3] / 6
         
         landing_height = sigmoid_scale(state_data[i][0], 10)
         eroded_cells =sigmoid_scale( state_data[i][1], 10)
@@ -46,14 +41,14 @@ def get_all_current_state(games: Tetris_AGENT.MultiGame) :
         column_transitions = sigmoid_scale(state_data[i][3], 10)
         holes = sigmoid_scale(state_data[i][4], 10)
         wells = sigmoid_scale(state_data[i][5], 10)
-        scaled_current_piece = state_data[i][6] / 6
+        
+        current_piece_tensor = torch.tensor(state_data[i][6])
+        hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
 
         queue_tensor = torch.tensor(state_data[i][7:])
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()
-
-        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
 
         concat = np.concatenate([
             [landing_height], 
@@ -62,7 +57,7 @@ def get_all_current_state(games: Tetris_AGENT.MultiGame) :
             [column_transitions], 
             [holes], 
             [wells], 
-            [scaled_current_piece], 
+            hot_one_current_piece.numpy(), 
             flat_hot_one])
         
         scaled_states.append(concat)
@@ -75,34 +70,20 @@ def scale_test_states(tests) :
 
     for i in range(len(tests)) :
 
-        # scaled_height = sigmoid_scale(tests[i][0], 30)
-        # scaled_holes = sigmoid_scale(tests[i][1], 5)
-        # scaled_rugosity = sigmoid_scale(tests[i][2], 10)
-        # scaled_current_piece = tests[i][3] / 6
-        
-        # queue_tensor = torch.tensor(tests[i][4:])
-        # hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
-
-        # flat_hot_one = hot_one_piece_queue.flatten()
-
-        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
-
-        # scaled_tests.append(concat)
-
         landing_height = sigmoid_scale(tests[i][0])
         eroded_cells = sigmoid_scale(tests[i][1])
         row_transitions = sigmoid_scale(tests[i][2])
         column_transitions = sigmoid_scale(tests[i][3])
         holes = sigmoid_scale(tests[i][4])
         wells = sigmoid_scale(tests[i][5])
-        scaled_current_piece = tests[i][6] / 6
+
+        current_piece_tensor = torch.tensor(tests[i][6])
+        hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
 
         queue_tensor = torch.tensor(tests[i][7:])
         hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
         flat_hot_one = hot_one_piece_queue.flatten()
-
-        # concat = np.concatenate([[scaled_height], [scaled_holes], [scaled_rugosity], [scaled_current_piece], flat_hot_one])
 
         concat = np.concatenate([
             [landing_height], 
@@ -111,7 +92,7 @@ def scale_test_states(tests) :
             [column_transitions], 
             [holes], 
             [wells], 
-            [scaled_current_piece], 
+            hot_one_current_piece, 
             flat_hot_one])
         
         scaled_tests.append(concat)
@@ -137,36 +118,40 @@ def print_current_state(estado):
 
 def back_propagation(samples) :
 
-    base_qs = []
+    # base_qs = []
 
-    bellman_results = []
+    # bellman_results = []
 
     old_states_matrix =  np.array([sample[0] for sample in samples])
     old_actions_matrix = np.array([sample[1] for sample in samples])
     old_rewards_matrix = np.array([sample[2] for sample in samples])
     new_states_matrix =  np.array([sample[3] for sample in samples])
+    old_dones_matrix   = np.array([sample[4] for sample in samples], dtype=np.float32)
 
     old_states_tenson = torch.from_numpy(old_states_matrix)
-    old_actions_tensor = torch.from_numpy(old_actions_matrix)
     old_rewards_tensor = torch.from_numpy(old_rewards_matrix)
     new_states_tensor = torch.from_numpy(new_states_matrix)
+    old_dones_tensor =   torch.from_numpy(old_dones_matrix)
 
-    q_values = model(old_states_tenson)
-    base_qs =  q_values.gather(1, old_actions_tensor.unsqueeze(-1)).squeeze(-1)
+    base_vs = model(old_states_tenson).squeeze(-1)
+    target_vs = target_model(new_states_tensor).squeeze(-1)
 
-    target_q_values = target_model(new_states_tensor)
+    not_done = 1.0 - old_dones_tensor
 
-    max_target_qs = torch.max(target_q_values, dim=1)[0]
-
-    bellman_results = old_rewards_tensor + (0.99 * max_target_qs)
+    bellman_results = old_rewards_tensor + (0.99 * target_vs * not_done)
 
     optimizer.zero_grad()
 
-    loss = criterion(base_qs, bellman_results)
+    loss = criterion(base_vs, bellman_results)
 
     loss.backward()
-
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
     optimizer.step()
+
+    return loss.item()
+
+def format_float(f, digits=3) :
+    return f"{f:.{digits}f}"
 
 print("Started")
 
@@ -174,12 +159,15 @@ NUM_NEURONS = 128
 NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
+ACTION_SPACE_SIZE = 41
+VALUE_OUTPUT_DIM = 1    
+
 LOG_PATH = "logs/training_metrics.csv"
 LOG_TRAINING_IN_EPISODES = 10
 
-WATCH_TRANING = False
+WATCH_TRANING = True
 
-INPUT_DIMENSIONS = 42
+INPUT_DIMENSIONS = 48
 OUTPUT_DIMENSIONS = 41
 
 EPSILON_MIN = 0.05
@@ -189,38 +177,34 @@ BUFFER_SAMPLE_SIZE = 128
 
 games = Tetris_AGENT.MultiGame(NUM_GAMES)
 
-model        = DQN(input_dim=INPUT_DIMENSIONS, output_dim=OUTPUT_DIMENSIONS, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
-target_model = DQN(input_dim=INPUT_DIMENSIONS, output_dim=OUTPUT_DIMENSIONS, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
+model        = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
+target_model = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
 optimizer    = optim.Adam(model.parameters(), lr=0.001)
-criterion    = nn.MSELoss()
+criterion    = nn.SmoothL1Loss()
 
 buffer         = ReplayBuffer()
-epsilon_greedy = EpsilonGreedy(output_size=OUTPUT_DIMENSIONS, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
+epsilon_greedy = EpsilonGreedy(output_size=ACTION_SPACE_SIZE, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
 
 
-action_selection_counts = np.zeros(OUTPUT_DIMENSIONS, dtype=int)
+action_selection_counts = np.zeros(ACTION_SPACE_SIZE, dtype=int)
 
 watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
-
-action_count     = 0
-sum_action_count = 0
-
-pieces_placed         = 0
-pieces_placed_sum     = 0
-pieces_placed_counter = 0
-
-episode_interval = 0
-placed_total = 0
 
 games.resetAll()
 state = np.array(get_all_current_state(games), dtype=np.float32)
 
+# LOGGER
+
 main_logs = [
+            "total_time",
             "time_between_intervals", 
             "episode_interval", 
+            "pieces_placed", 
             "pieces_placed_interval", 
             "lines_interval", 
-            "epsilon"
+            "lines_per_piece",
+            "epsilon",
+            "loss"
             ]
 
 action_headers = [f"a_{i}_count" for i in range(41)]
@@ -232,26 +216,38 @@ log_counter = Counter(LOG_TRAINING_IN_EPISODES)
 interval_timer = Timer()
 interval_timer.start_timer()
 
-while True:
+global_steps = 0
 
-    action_count = 0
+pieces_placed = 0
+pieces_placed_interval = 0
+
+lines_cleared_total_last = 0
+
+episode_interval = 0
+
+total_training_time = 0
+
+action_count = 8
+output_count = 41
+
+log_loss = 0
+
+while True:
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
     watcher.check_should_watch_episodes()
 
     look_ahead = games.lookAheadAll()
-    test_qs = []
+    test_vs = []
 
     for i in range(len(look_ahead)) :
         scaled_tests = scale_test_states(look_ahead[i])
         py_array = np.array(scaled_tests)
         test_t = torch.FloatTensor(py_array)
-        test_qs.append(model(test_t)) # 8x41
+        test_vs.append(model(test_t).squeeze(-1)) # 8x41
 
-          
-    action_count = 8
-    output_count = 41
+
     action_indexes = []
 
     for i in range(action_count) :
@@ -261,10 +257,13 @@ while True:
         greedy = epsilon_greedy.greedy()
         
         if greedy == -1 :
-            for j in range(output_count) :
-                best.append(torch.argmax(test_qs[i][j]).item())
-            action_indexes.append(max(best))
-            action_selection_counts[max(best)] += 1
+            # for j in range(output_count) :
+            #     best.append(torch.argmax(test_qs[i][j]).item())
+            # action_indexes.append(max(best))
+            # action_selection_counts[max(best)] += 1
+            best_index = torch.argmax(test_vs[i]).item()
+            action_indexes.append(best_index)
+            action_selection_counts[best_index] += 1
         else :
             action_indexes.append(greedy)
             action_selection_counts[greedy] += 1
@@ -277,6 +276,8 @@ while True:
 
     step_data = games.stepAll(action_enums)
 
+    global_steps += len(step_data)
+
     next_state = np.array(get_all_current_state(games), dtype=np.float32)
 
     for i in range(len(step_data)) :
@@ -287,27 +288,42 @@ while True:
 
             model.increase_target_counter()
 
-            action_count += 1
             pieces_placed += 1
-            pieces_placed_counter += 1
+            pieces_placed_interval += 1
 
             if (buffer.size() > 1000) :
                 experience_samples = buffer.sample(BUFFER_SAMPLE_SIZE)
-                back_propagation(experience_samples)
+                log_loss = back_propagation(experience_samples)
 
         if step_i.lost :
             games.resetThis(i)
             episode_interval += 1
+
             if log_counter.increase_counter() :
+
+                interval = interval_timer.restart_timer()
+                total_training_time += interval
+
+                placed_interval = pieces_placed_interval
+
+                lines_cleared_total_now = games.getLinesCleared()
+                lines_cleared_interval = lines_cleared_total_now - lines_cleared_total_last
+                lines_cleared_total_last = lines_cleared_total_now
+
                 log_data = [
-                    interval_timer.restart_timer(),
+                    format_float(total_training_time),
+                    format_float(interval),
                     episode_interval,
                     pieces_placed,
-                    games.getLinesCleared(),
-                    epsilon_greedy.epsilon
+                    placed_interval,
+                    lines_cleared_interval,
+                    format_float(lines_cleared_interval / placed_interval),
+                    format_float(epsilon_greedy.epsilon),
+                    log_loss
                 ]
                 main_logger.csv_log(log_data=log_data)
-                sum_action_count = 0
+
+                pieces_placed_interval = 0
             
     for i in range(len(state)) :
         buffer.push(

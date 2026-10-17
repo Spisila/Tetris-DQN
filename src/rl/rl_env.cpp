@@ -107,9 +107,8 @@ StepData RLEnv::calculateReward()
     int wells = getGameEnv().getBoard().getWellSums();
 
     float reward =
-        (lines * LINES_CLEARED_WEIGHT) +
         (-1 * landing_height) +
-        (1 * eroded_cells) +
+        (2 * eroded_cells) +
         (-1 * row_transitions) +
         (-1 * column_transitions) +
         (-4 * holes) +
