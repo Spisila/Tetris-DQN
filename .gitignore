@@ -6,6 +6,8 @@
 /Release
 /build
 /bin
+/Debug
+/logs
 
 __pycache__/
 *.pyc

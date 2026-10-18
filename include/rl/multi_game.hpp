@@ -31,7 +31,7 @@ private:
 
   GameRenderer renderer;
 
-  std::vector<std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE>> look_ahead_cache;
+  std::vector<std::array<py::array_t<float>, ACTION_SPACE_SIZE>> look_ahead_cache;
 
   bool running{false};
 
@@ -39,7 +39,7 @@ private:
   static std::vector<RLEnv> createGames(size_t count);
 
 public:
-  std::vector<std::array<float, STATE_SIZE>> states_cache;
+  std::vector<py::array_t<float>> states_cache;
 
   explicit MultiGame(size_t parallel_game_count);
   ~MultiGame();
@@ -49,7 +49,7 @@ public:
   std::vector<StepData> stepAll(std::vector<PreciseActions> _actions);
   void stepThis(int index, Actions _action);
 
-  const std::vector<std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE>> &lookAheadAll();
+  const std::vector<std::array<py::array_t<float>, ACTION_SPACE_SIZE>> &lookAheadAll();
 
   void resetAll();
   void resetThis(int index);
@@ -60,7 +60,7 @@ public:
   int getSumScore();
   int getLinesCleared();
 
-  std::vector<std::array<float, STATE_SIZE>> getStates();
+  std::vector<py::array_t<float>> getStates();
 
   void initGraphics();
   void render(std::string &generation_counter);

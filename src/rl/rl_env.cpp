@@ -1,6 +1,8 @@
 #include <rl_env.hpp>
 #include <iostream>
 
+
+
 RLEnv::RLEnv(int _id) : game_env(_id)
 {
 }
@@ -28,13 +30,13 @@ void RLEnv::takePreciseAction(PreciseActions action)
   }
 }
 
-std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE> RLEnv::testStep()
+std::array<py::array_t<float>, ACTION_SPACE_SIZE> RLEnv::testStep()
 {
 
   int actions_start = static_cast<int>(PreciseActions::ROTATION_0_COLUMN_0);
   int actions_end = static_cast<int>(PreciseActions::HOLD);
 
-  std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE> state_attempts;
+  std::array<py::array_t<float>, ACTION_SPACE_SIZE> state_attempts;
 
   Game snapshot = game_env;
 
@@ -121,36 +123,61 @@ int RLEnv::getGameEnvID() const
   return game_env.getId();
 }
 
-std::array<float, STATE_SIZE> RLEnv::getGameState()
+float RLEnv::sigmoidScale(float x, float k) const
+{
+  return (2.0f / (1.0f + exp(-x / k))) - 1;
+}
+
+py::array_t<float> RLEnv::getGameState()
 {
 
   std::array<float, STATE_SIZE> state = {};
 
-  float landing_height = game_env.getLastLandingHeight();
-  int eroded_cells = game_env.getLastErodedPieceCells();
+  int state_index = 0;
 
-  state[0] = landing_height;
-  state[1] = eroded_cells;
+  float landing_height = game_env.getLastLandingHeight();
+  float eroded_cells = static_cast<float>(game_env.getLastErodedPieceCells());
+
+  state[state_index++] = sigmoidScale(landing_height, 10);
+  state[state_index] = sigmoidScale(eroded_cells, 10);
 
   std::array<int, 4> board_state = game_env.getBoard().getBoardState();
 
   for (int i = 0; i < board_state.size(); i++)
   {
-    state[i + 2] = board_state[i];
+    state[state_index++] = sigmoidScale(static_cast<float>(board_state[i]), 10);
   }
 
   const Tetromino &current_tetromino = game_env.getBoard().getBoardTetromino();
   const int current_piece_type = current_tetromino.getCurrentPieceType();
 
-  state[6] = formatPiece(current_piece_type);
+  int piece_id = formatPiece(current_piece_type);
 
+  const auto& current_piece_hot_one = ONE_HOT_PIECES_TABLE[piece_id];
+  
+  for (float f : current_piece_hot_one) {
+    state[state_index++] = f;
+  }
+  
   const PieceQueue &game_queue = game_env.getPieceQueue();
   const auto &piece_queue = game_queue.getPieceQueue();
-
-  for (int i = 0; i < piece_queue.size(); i++)
+  
+  for (int piece : piece_queue)
   {
-    state[i + 7] = formatPiece(piece_queue[i]);
+    int queue_piece_id = formatPiece(piece);
+    const auto& queue_piece_hot_one = ONE_HOT_PIECES_TABLE[queue_piece_id];
+    for (float q_i : queue_piece_hot_one) {
+      state[state_index++] = q_i;
+    }
+    
   }
 
-  return state;
+  return py::array_t<float>(
+    STATE_SIZE,
+    state.data()
+  );
+
+  // return state;
 }
+
+

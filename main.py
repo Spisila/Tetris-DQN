@@ -31,38 +31,38 @@ def sigmoid_scale(x, k=5.0):
 def get_all_current_state(games: Tetris_AGENT.MultiGame) :
     
     state_data = games.getStates()
-    scaled_states = []
+    # scaled_states = []
 
-    for i in range(len(state_data)) :
+    # for i in range(len(state_data)) :
         
-        landing_height = sigmoid_scale(state_data[i][0], 10)
-        eroded_cells =sigmoid_scale( state_data[i][1], 10)
-        row_transitions = sigmoid_scale(state_data[i][2], 10)
-        column_transitions = sigmoid_scale(state_data[i][3], 10)
-        holes = sigmoid_scale(state_data[i][4], 10)
-        wells = sigmoid_scale(state_data[i][5], 10)
+    #     landing_height = sigmoid_scale(state_data[i][0], 10)
+    #     eroded_cells =sigmoid_scale( state_data[i][1], 10)
+    #     row_transitions = sigmoid_scale(state_data[i][2], 10)
+    #     column_transitions = sigmoid_scale(state_data[i][3], 10)
+    #     holes = sigmoid_scale(state_data[i][4], 10)
+    #     wells = sigmoid_scale(state_data[i][5], 10)
         
-        current_piece_tensor = torch.tensor(state_data[i][6], dtype=torch.long)
-        hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
+    #     current_piece_tensor = torch.tensor(state_data[i][6], dtype=torch.long)
+    #     hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
 
-        queue_tensor = torch.tensor(state_data[i][7:], dtype=torch.long)
-        hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
+    #     queue_tensor = torch.tensor(state_data[i][7:], dtype=torch.long)
+    #     hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
 
-        flat_hot_one = hot_one_piece_queue.flatten()
+    #     flat_hot_one = hot_one_piece_queue.flatten()
 
-        concat = np.concatenate([
-            [landing_height], 
-            [eroded_cells], 
-            [row_transitions], 
-            [column_transitions], 
-            [holes], 
-            [wells], 
-            hot_one_current_piece.numpy(), 
-            flat_hot_one])
+    #     concat = np.concatenate([
+    #         [landing_height], 
+    #         [eroded_cells], 
+    #         [row_transitions], 
+    #         [column_transitions], 
+    #         [holes], 
+    #         [wells], 
+    #         hot_one_current_piece.numpy(), 
+    #         flat_hot_one])
         
-        scaled_states.append(concat)
+    #     scaled_states.append(concat)
 
-    return scaled_states
+    return state_data
 
 def scale_test_states(tests) :
     
@@ -118,10 +118,6 @@ def print_current_state(estado):
 
 def back_propagation(samples) :
 
-    # base_qs = []
-
-    # bellman_results = []
-
     old_states_matrix =  np.array([sample[0] for sample in samples])
     old_actions_matrix = np.array([sample[1] for sample in samples])
     old_rewards_matrix = np.array([sample[2] for sample in samples])
@@ -155,17 +151,14 @@ def format_float(f, digits=3) :
 
 print("Started")
 
+# Hyperparameters
+
 NUM_NEURONS = 128
 NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
 ACTION_SPACE_SIZE = 41
 VALUE_OUTPUT_DIM = 1    
-
-LOG_PATH = "logs/training_metrics.csv"
-LOG_TRAINING_IN_EPISODES = 10
-
-WATCH_TRANING = True
 
 INPUT_DIMENSIONS = 48
 OUTPUT_DIMENSIONS = 41
@@ -185,15 +178,19 @@ criterion    = nn.SmoothL1Loss()
 buffer         = ReplayBuffer()
 epsilon_greedy = EpsilonGreedy(output_size=ACTION_SPACE_SIZE, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
 
-
 action_selection_counts = np.zeros(ACTION_SPACE_SIZE, dtype=int)
-
-watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
 
 games.resetAll()
 state = np.array(get_all_current_state(games), dtype=np.float32)
 
 # LOGGER
+
+LOG_PATH = "logs/training_metrics.csv"
+LOG_TRAINING_IN_EPISODES = 10
+
+WATCH_TRANING = False
+
+watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
 
 main_logs = [
             "total_time",
@@ -245,10 +242,9 @@ while True:
     test_vs = []
 
     for i in range(len(look_ahead)) :
-        scaled_tests = scale_test_states(look_ahead[i])
-        py_array = np.array(scaled_tests)
+        py_array = np.array(look_ahead)
         test_t = torch.FloatTensor(py_array)
-        test_vs.append(model(test_t).squeeze(-1)) # 8x41
+        test_vs.append(model(test_t).squeeze(-1)) # 8x48
 
 
     action_indexes = []
@@ -260,16 +256,12 @@ while True:
         greedy = epsilon_greedy.greedy()
         
         if greedy == -1 :
-            # for j in range(output_count) :
-            #     best.append(torch.argmax(test_qs[i][j]).item())
-            # action_indexes.append(max(best))
-            # action_selection_counts[max(best)] += 1
             best_index = torch.argmax(test_vs[i]).item()
             action_indexes.append(best_index)
-            action_selection_counts[best_index] += 1
+            # action_selection_counts[best_index] += 1
         else :
             action_indexes.append(greedy)
-            action_selection_counts[greedy] += 1
+            # action_selection_counts[greedy] += 1
 
 
     action_enums = []

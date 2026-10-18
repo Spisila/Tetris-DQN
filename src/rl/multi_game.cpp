@@ -111,16 +111,16 @@ void MultiGame::threadLoop(size_t thread_segment_index)
 std::vector<StepData> MultiGame::stepAll(std::vector<PreciseActions> _actions)
 {
 
-  py::gil_scoped_release release;
-
   for (int i = 0; i < games.size(); i++)
   {
     games[i].getGameEnv().next_precise_action = _actions[i];
   }
 
-  barrier.arrive_and_wait();
-
-  barrier.arrive_and_wait();
+  {
+    py::gil_scoped_release release;
+    barrier.arrive_and_wait();
+    barrier.arrive_and_wait();
+  }
 
   std::vector<StepData> rewards;
 
@@ -138,7 +138,7 @@ void MultiGame::stepThis(int index, Actions _action)
   games[index].step();
 }
 
-const std::vector<std::array<std::array<float, STATE_SIZE>, ACTION_SPACE_SIZE>>& MultiGame::lookAheadAll()
+const std::vector<std::array<py::array_t<float>, ACTION_SPACE_SIZE>> &MultiGame::lookAheadAll()
 {
 
   for (size_t i = 0; i < games.size(); i++)
@@ -184,7 +184,7 @@ int MultiGame::getLinesCleared()
   return sum;
 }
 
-std::vector<std::array<float, 12>> MultiGame::getStates()
+std::vector<py::array_t<float>> MultiGame::getStates()
 {
   return states_cache;
 }
