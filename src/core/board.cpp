@@ -59,6 +59,38 @@ int Board::getAggregateHeight() const
     return total_height;
 }
 
+std::array<int, BOARD_SIZE_X> Board::getColumnTopHeights() const
+{
+    std::array<int, BOARD_SIZE_X> heights{};
+
+    for (int x = 0; x < BOARD_SIZE_X; x++)
+    {
+        for (int y = 0; y < BOARD_SIZE_Y; y++)
+        {
+            if (board[x][y] == CellState::FILLED)
+            {
+                heights[x] = BOARD_SIZE_Y - y; // primeira célula preenchida de cima para baixo
+                break;
+            }
+        }
+    }
+    return heights;
+}
+
+std::array<int, BOARD_SIZE_X - 1> Board::getColumnHeightDifferences() const
+{
+
+    auto heights = getColumnTopHeights();
+    std::array<int, BOARD_SIZE_X - 1> differences{};
+
+    for (int x = 0; x < BOARD_SIZE_X - 1; x++)
+    {
+        differences[x] = heights[x + 1] - heights[x];
+    }
+
+    return differences;
+}
+
 int Board::getAmountOfHoles() const
 {
 

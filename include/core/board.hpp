@@ -32,6 +32,9 @@ public:
   std::array<std::array<CellState, BOARD_SIZE_Y>, BOARD_SIZE_X> getBoardCells() const;
 
   std::array<int, BOARD_SIZE_X> getBoardHeight() const;
+  std::array<int, BOARD_SIZE_X> getColumnTopHeights() const;
+  std::array<int, BOARD_SIZE_X - 1> getColumnHeightDifferences() const;
+
   int getAmountOfHoles() const;
   int getRugosity() const;
   int getRowTransitions() const;

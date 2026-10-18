@@ -151,6 +151,18 @@ py::array_t<float> RLEnv::getGameState()
   state[state_index++] = sigmoidScale(static_cast<float>(board_state[2]), 12);
   state[state_index++] = sigmoidScale(static_cast<float>(board_state[3]), 19);
 
+  auto column_heights = game_env.getBoard().getBoardHeight();
+
+  for (int height : column_heights) {
+    state[state_index++] = static_cast<float>(height) / BOARD_SIZE_Y;
+  } 
+  
+  auto height_differences = game_env.getBoard().getColumnHeightDifferences();
+  
+  for (int diff : height_differences) {
+    state[state_index++] = sigmoidScale(static_cast<float>(diff), 3.5f);
+  } 
+
   const Tetromino &current_tetromino = game_env.getBoard().getBoardTetromino();
   const int current_piece_type = current_tetromino.getCurrentPieceType();
 
