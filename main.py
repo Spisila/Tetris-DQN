@@ -188,7 +188,7 @@ state = np.array(get_all_current_state(games), dtype=np.float32)
 LOG_PATH = "logs/training_metrics.csv"
 LOG_TRAINING_IN_EPISODES = 10
 
-WATCH_TRANING = False
+WATCH_TRANING = True
 
 watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
 
@@ -202,8 +202,25 @@ main_logs = [
             "lines_per_piece",
             "epsilon",
             "loss",
-            "rewards_interval"
+            "rewards_interval",
+            "average_eroded_cells",
+            "average_landing_height",
+            "average_row_transitions",
+            "average_column_transitions",
+            "average_holes",
+            "average_wells",
             ]
+
+#   STATE :
+#   0 = landing_height
+#   1 = eroded_cells
+#   2 = row_transitions
+#   3 = column_transitions
+#   4 = holes
+#   5 = wells
+#   6: = current piece and piece queue
+ 
+
 
 action_headers = [f"a_{i}_count" for i in range(41)]
 
@@ -214,7 +231,6 @@ log_counter = Counter(LOG_TRAINING_IN_EPISODES)
 interval_timer = Timer()
 interval_timer.start_timer()
 
-global_steps = 0
 
 pieces_placed = 0
 pieces_placed_interval = 0
@@ -232,6 +248,22 @@ log_loss = 0
 
 log_rewards = 0
 
+global_steps = 0
+interval_steps = 0
+
+average_landing_height = 0
+average_eroded_cells = 0
+average_row_transitions = 0
+average_column_transitions = 0
+average_holes = 0
+average_wells = 0
+
+feature_samples = [] 
+
+def inverse_sigmoid_scale(s, k=10.0):
+    s = np.clip(s, -0.9999, 0.9999)
+    return k * np.log((1 + s) / (1 - s))
+
 while True:
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
@@ -242,7 +274,7 @@ while True:
     test_vs = []
 
     for i in range(len(look_ahead)) :
-        py_array = np.array(look_ahead)
+        py_array = np.array(look_ahead[i])
         test_t = torch.FloatTensor(py_array)
         test_vs.append(model(test_t).squeeze(-1)) # 8x48
 
@@ -272,12 +304,22 @@ while True:
     step_data = games.stepAll(action_enums)
 
     global_steps += len(step_data)
+    interval_steps += len(step_data)
+
+    for s in state :
+        average_eroded_cells += s[0]
+        average_landing_height += s[1]
+        average_row_transitions += s[2]
+        average_column_transitions += s[3]
+        average_holes += s[4]
+        average_wells += s[5]
 
     next_state = np.array(get_all_current_state(games), dtype=np.float32)
 
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
+
         log_rewards += step_i.reward
 
         if step_i.piece_placed :
@@ -316,11 +358,25 @@ while True:
                     format_float(lines_cleared_interval / placed_interval),
                     format_float(epsilon_greedy.epsilon),
                     log_loss,
-                    log_rewards
+                    log_rewards,
+                    average_eroded_cells / interval_steps,
+                    average_landing_height / interval_steps,
+                    average_row_transitions / interval_steps,
+                    average_column_transitions / interval_steps,
+                    average_holes / interval_steps,
+                    average_wells / interval_steps
                 ]
                 main_logger.csv_log(log_data=log_data)
 
+                average_landing_height = 0
+                average_eroded_cells = 0
+                average_row_transitions = 0
+                average_column_transitions = 0
+                average_holes = 0
+                average_wells = 0
+
                 pieces_placed_interval = 0
+                interval_steps = 0
                 log_rewards = 0
             
     for i in range(len(state)) :

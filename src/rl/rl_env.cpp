@@ -131,22 +131,33 @@ float RLEnv::sigmoidScale(float x, float k) const
 py::array_t<float> RLEnv::getGameState()
 {
 
+  /*
+  STATE :
+  0 = eroded_cells
+  1 = landing_height
+  2 = row_transitions
+  3 = column_transitions
+  4 = holes
+  5 = wells
+  6: = current piece and piece queue
+  */ 
+
   std::array<float, STATE_SIZE> state = {};
 
   int state_index = 0;
 
-  float landing_height = game_env.getLastLandingHeight();
   float eroded_cells = static_cast<float>(game_env.getLastErodedPieceCells());
+  float landing_height = game_env.getLastLandingHeight();
 
+  state[state_index++] = sigmoidScale(eroded_cells, 4);
   state[state_index++] = sigmoidScale(landing_height, 10);
-  state[state_index] = sigmoidScale(eroded_cells, 10);
 
   std::array<int, 4> board_state = game_env.getBoard().getBoardState();
 
-  for (int i = 0; i < board_state.size(); i++)
-  {
-    state[state_index++] = sigmoidScale(static_cast<float>(board_state[i]), 10);
-  }
+  state[state_index++] = sigmoidScale(static_cast<float>(board_state[0]), 52);
+  state[state_index++] = sigmoidScale(static_cast<float>(board_state[1]), 30);
+  state[state_index++] = sigmoidScale(static_cast<float>(board_state[2]), 12);
+  state[state_index++] = sigmoidScale(static_cast<float>(board_state[3]), 19);
 
   const Tetromino &current_tetromino = game_env.getBoard().getBoardTetromino();
   const int current_piece_type = current_tetromino.getCurrentPieceType();
