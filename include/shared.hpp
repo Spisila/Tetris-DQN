@@ -1,7 +1,7 @@
 #pragma once
 
 constexpr size_t STATE_SIZE = 48;
-constexpr size_t ACTION_SPACE_SIZE = 41;
+constexpr size_t ACTION_SPACE_SIZE = 40;
 constexpr size_t QUEUE_SIZE = 5;
 
 struct Position

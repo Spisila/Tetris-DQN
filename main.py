@@ -157,11 +157,10 @@ NUM_NEURONS = 128
 NUM_GAMES   = 8
 SET_TARGET_IN_ACTIONS = 500
 
-ACTION_SPACE_SIZE = 41
+ACTION_SPACE_SIZE = 40
 VALUE_OUTPUT_DIM = 1    
 
 INPUT_DIMENSIONS = 48
-OUTPUT_DIMENSIONS = 41
 
 EPSILON_MIN = 0.05
 EPSILON_REDUCTION = 0.00005
@@ -188,7 +187,12 @@ state = np.array(get_all_current_state(games), dtype=np.float32)
 LOG_PATH = "logs/training_metrics.csv"
 LOG_TRAINING_IN_EPISODES = 10
 
-WATCH_TRANING = True
+SHOULD_TRAIN = True
+
+WATCH_TRANING = False
+
+WATCH_POST_TRAINING = True
+POST_TRAINING_THRESHOLD = 10_000
 
 watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
 
@@ -219,7 +223,6 @@ main_logs = [
 #   4 = holes
 #   5 = wells
 #   6: = current piece and piece queue
- 
 
 
 action_headers = [f"a_{i}_count" for i in range(41)]
@@ -242,7 +245,6 @@ episode_interval = 0
 total_training_time = 0
 
 action_count = NUM_GAMES
-output_count = 41
 
 log_loss = 0
 
@@ -260,15 +262,16 @@ average_wells = 0
 
 feature_samples = [] 
 
-def inverse_sigmoid_scale(s, k=10.0):
-    s = np.clip(s, -0.9999, 0.9999)
-    return k * np.log((1 + s) / (1 - s))
-
 while True:
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
     watcher.check_should_watch_episodes()
+
+    if episode_interval >= POST_TRAINING_THRESHOLD :
+        watcher.should_watch = True
+        epsilon_greedy.epsilon = 0
+        SHOULD_TRAIN = False
 
     look_ahead = games.lookAheadAll()
     test_vs = []
@@ -331,7 +334,7 @@ while True:
             pieces_placed += 1
             pieces_placed_interval += 1
 
-            if (buffer.size() > 1000) :
+            if buffer.size() > 1000 and SHOULD_TRAIN == True :
                 experience_samples = buffer.sample(BUFFER_SAMPLE_SIZE)
                 log_loss = back_propagation(experience_samples)
 

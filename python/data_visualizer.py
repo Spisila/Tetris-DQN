@@ -9,7 +9,7 @@ df = pd.read_csv("logs/training_metrics.csv")
 sns.set_theme(style="darkgrid")
 plt.figure(figsize=(10, 6))
 
-sns.lineplot(data=df, x="episode_interval", y="time_between_intervals")
+sns.lineplot(data=df, x="episode_interval", y="lines_per_piece")
 plt.title("Evolução Temporal por Categoria")
 plt.xticks(rotation=45)
 plt.tight_layout()
