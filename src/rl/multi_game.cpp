@@ -155,13 +155,14 @@ void MultiGame::resetAll()
   for (int i = 0; i < games.size(); i++)
   {
     games[i].reset();
+    states_cache[i] = games[i].getGameState();
   }
 }
 
 void MultiGame::resetThis(int index)
 {
-
   games[index].reset();
+  states_cache[index] = games[index].getGameState();
 }
 
 // int MultiGame::getSumScore()

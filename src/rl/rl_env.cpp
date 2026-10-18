@@ -80,7 +80,7 @@ StepData RLEnv::calculateReward()
 {
   if (getGameEnv().lost)
   {
-    StepData loss_step = {LOSS_SCORE_WEIGHT, true, true};
+    StepData loss_step = {-20.f, true, true};
     return loss_step;
   }
 
@@ -89,20 +89,22 @@ StepData RLEnv::calculateReward()
     getGameEnv().piece_set = false;
 
     int lines = getGameEnv().getLinesClearedLast();
-    float landing_height = getGameEnv().getLastLandingHeight();
-    int eroded_cells = getGameEnv().getLastErodedPieceCells();
-    int row_transitions = getGameEnv().getBoard().getRowTransitions();
-    int column_transitions = getGameEnv().getBoard().getColumnTransitions();
-    int holes = getGameEnv().getBoard().getAmountOfHoles();
-    int wells = getGameEnv().getBoard().getWellSums();
+    // float landing_height = getGameEnv().getLastLandingHeight();
+    // int eroded_cells = getGameEnv().getLastErodedPieceCells();
+    // int row_transitions = getGameEnv().getBoard().getRowTransitions();
+    // int column_transitions = getGameEnv().getBoard().getColumnTransitions();
+    // int holes = getGameEnv().getBoard().getAmountOfHoles();
+    // int wells = getGameEnv().getBoard().getWellSums();
 
-    float reward =
-        (-1 * landing_height) +
-        (2 * eroded_cells) +
-        (-1 * row_transitions) +
-        (-1 * column_transitions) +
-        (-4 * holes) +
-        (-1 * wells);
+    // float reward =
+    //     (-1 * landing_height) +
+    //     (2 * eroded_cells) +
+    //     (-1 * row_transitions) +
+    //     (-1 * column_transitions) +
+    //     (-4 * holes) +
+    //     (-1 * wells);
+
+    float reward = 1.0f + (lines * lines) * 10.0f; 
 
     StepData piece_set_step = {reward, true, false};
     return piece_set_step;

@@ -316,6 +316,8 @@ while True:
 
     next_state = np.array(get_all_current_state(games), dtype=np.float32)
 
+    games_to_reset = []
+
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
@@ -334,7 +336,8 @@ while True:
                 log_loss = back_propagation(experience_samples)
 
         if step_i.lost :
-            games.resetThis(i)
+            # games.resetThis(i)
+            games_to_reset.append(i)
             episode_interval += 1
 
             if log_counter.increase_counter() :
@@ -389,5 +392,8 @@ while True:
             )
     
     state = next_state
+
+    for game in games_to_reset :
+        games.resetThis(game)
 
     epsilon_greedy.reduce_epsilon()
