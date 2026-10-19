@@ -26,34 +26,20 @@ from Release import Tetris_AGENT
 
 torch.set_num_threads(2)
 
-def back_propagation(samples) :
+def back_propagation(batch):
+    states, rewards, next_states, dones = batch
 
-    old_states_matrix =  np.array([sample[0] for sample in samples])
-    old_rewards_matrix = np.array([sample[2] for sample in samples])
-    new_states_matrix =  np.array([sample[3] for sample in samples])
-    old_dones_matrix   = np.array([sample[4] for sample in samples], dtype=np.float32)
+    with torch.no_grad():
+        target_vs = target_model(next_states).squeeze(-1)
+        targets = rewards + 0.99 * target_vs * (1.0 - dones)
 
-    old_states_tenson = torch.from_numpy(old_states_matrix)
-    old_rewards_tensor = torch.from_numpy(old_rewards_matrix)
-    new_states_tensor = torch.from_numpy(new_states_matrix)
-    old_dones_tensor =   torch.from_numpy(old_dones_matrix)
-
-    base_vs = model(old_states_tenson).squeeze(-1)
-    target_vs = target_model(new_states_tensor).squeeze(-1)
-
-    not_done = 1.0 - old_dones_tensor
-
-    bellman_results = old_rewards_tensor + (0.99 * target_vs * not_done)
+    loss = criterion(model(states).squeeze(-1), targets)
 
     optimizer.zero_grad()
-
-    loss = criterion(base_vs, bellman_results)
-
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
     optimizer.step()
     scheduler.step()
-
     return loss.item()
 
 def format_float(f, digits=3) :
@@ -201,16 +187,13 @@ while True:
         SHOULD_TRAIN = False
 
     look_head_perf_timer.start_timer()
+
     look_ahead = games.lookAheadAll()
+    batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
+    with torch.inference_mode():
+        best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  
+    
     look_head_perf_timer.restart_timer()
-
-    test_vs = []
-
-    for i in range(len(look_ahead)) :
-        py_array = np.array(look_ahead[i])
-        test_t = torch.FloatTensor(py_array)
-        test_vs.append(model(test_t).squeeze(-1))
-
 
     action_indexes = []
 
@@ -221,7 +204,7 @@ while True:
         greedy = epsilon_greedy.greedy()
         
         if greedy == -1 :
-            best_index = torch.argmax(test_vs[i]).item()
+            best_index = best_index = best_actions[i]
             action_indexes.append(best_index)
             # action_selection_counts[best_index] += 1
         else :
