@@ -15,6 +15,19 @@ enum class CellState
   FILLED_L
 };
 
+enum class CellType
+{
+  EMPTY,
+  SPAWN,
+  FILLED_I,
+  FILLED_O,
+  FILLED_T,
+  FILLED_S,
+  FILLED_Z,
+  FILLED_J,
+  FILLED_L
+};
+
 enum class Actions
 {
   MOVE_LEFT,
