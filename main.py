@@ -101,11 +101,12 @@ main_logs = [
             "average_wells",
             ]
 
-action_headers = [f"a_{i}_count" for i in range(41)]
+action_headers = [f"a_{i}_count" for i in range(config.action_space_size)]
 
 run = Run(config, {})
 
 main_logger = run.csv("training_metrics.csv", main_logs)
+decisions_logger = run.csv("agent_decisions.csv", action_headers)
 
 log_counter = Counter(config.log_every_episodes)
 
@@ -172,7 +173,7 @@ while True:
     look_ahead = games.lookAheadAll()
     batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
     with torch.inference_mode():
-        best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  
+        best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  #Takes the best action from each look ahead
     
     look_head_perf_timer.restart_timer()
 
@@ -180,17 +181,15 @@ while True:
 
     for i in range(action_count) :
 
-        best = []
-
         greedy = epsilon_greedy.greedy()
         
         if greedy == -1 :
-            best_index = best_index = best_actions[i]
+            best_index = best_actions[i]
             action_indexes.append(best_index)
-            # action_selection_counts[best_index] += 1
+            action_selection_counts[best_index] += 1
         else :
             action_indexes.append(greedy)
-            # action_selection_counts[greedy] += 1
+            action_selection_counts[greedy] += 1
 
 
     action_enums = []
@@ -273,6 +272,7 @@ while True:
                     average_wells / interval_steps
                 ]
                 main_logger.log(log_data=log_data)
+                decisions_logger.log(log_data=action_selection_counts)
 
                 average_landing_height = 0
                 average_eroded_cells = 0
