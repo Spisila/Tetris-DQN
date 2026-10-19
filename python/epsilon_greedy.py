@@ -9,9 +9,10 @@ class EpsilonGreedy() :
         self.min = epsilon_min
         self.reduction_amount = reduction_amount
 
-    def reduce_epsilon(self) :
+    def reduce_epsilon(self, custom_amount = 0.00005) :
+        
         if self.epsilon > self.min : 
-            self.epsilon -= self.reduction_amount 
+            self.epsilon -= custom_amount 
 
     def greedy(self) :
         if random.random() > self.epsilon :

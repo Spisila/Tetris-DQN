@@ -58,8 +58,10 @@ VALUE_OUTPUT_DIM = 1
 
 INPUT_DIMENSIONS = 67
 
-EPSILON_MIN = 0.05
+EPSILON_MIN = 0.01
 EPSILON_REDUCTION = 0.00005
+
+
 
 LR_START = 1e-3
 LR_MIN = 1e-5
@@ -168,7 +170,7 @@ back_propagation_perf_timer = Timer()
 buffer_batching_perf_timer = Timer()
 
 perf_measure_counter = 0
-perf_measure_max = 50
+perf_measure_max = 500
 perf_measurments_taken = 0
 
 print("Before loop")
@@ -181,7 +183,7 @@ while True:
     
     watcher.check_should_watch_episodes()
 
-    if epsilon_greedy.epsilon <= EPSILON_MIN :
+    if episode_interval >= POST_TRAINING_THRESHOLD :
         watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
@@ -321,7 +323,7 @@ while True:
     for game in games_to_reset :
         games.resetThis(game)
 
-    epsilon_greedy.reduce_epsilon()
+    epsilon_greedy.epsilon = np.interp(episode_interval, [0, POST_TRAINING_THRESHOLD], [1, EPSILON_MIN])
 
     full_loop_perf_timer.restart_timer()
 

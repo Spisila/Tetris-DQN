@@ -79,7 +79,7 @@ void GameRenderer::drawBoard(const Game &game)
 
 void GameRenderer::initWindow()
 {
-  SetTargetFPS(60);
+  SetTargetFPS(240);
 
   SetTraceLogLevel(LOG_WARNING);
 
