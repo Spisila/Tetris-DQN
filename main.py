@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
 from python.DQN            import DQN
 from python.replay_buffer  import ReplayBuffer
-from python.episode_logger import EpisodeLogger
+from python.episode_logger import Run
 from python.episode_watcher import EpisodeWatcher
 from python.epsilon_greedy import EpsilonGreedy
 
@@ -29,12 +29,14 @@ from Release import Tetris_AGENT
 
 torch.set_num_threads(2)
 
+config = from_cli()
+
 def back_propagation(batch):
     states, rewards, next_states, dones = batch
 
     with torch.no_grad():
         target_vs = target_model(next_states).squeeze(-1)
-        targets = rewards + 0.99 * target_vs * (1.0 - dones)
+        targets = rewards + config.gamma * target_vs * (1.0 - dones)
 
     loss = criterion(model(states).squeeze(-1), targets)
 
@@ -49,37 +51,6 @@ def format_float(f, digits=3) :
     return f"{f:.{digits}f}"
 
 print("Started")
-
-# Hyperparameters
-
-# NUM_NEURONS = 128
-# NUM_GAMES   = 8
-
-# INPUT_DIMENSIONS = 67
-# ACTION_SPACE_SIZE = 40
-
-# VALUE_OUTPUT_DIM = 1    
-
-# SET_TARGET_IN_ACTIONS = 500
-
-# EPSILON_MIN = 0.01
-# EPSILON_REDUCTION = 0.00005
-
-# # GAMMA
-# LR_START = 1e-3
-# LR_MIN = 1e-5
-# LR_DECAY_STEPS = 300_000     
-# BUFFER_SAMPLE_SIZE = 256
-# BUFFER_SIZE_TILL_START_TRAINING = 10_000
-
-# LOG_TRAINING_IN_EPISODES = 10
-
-# WATCH_TRANING = False
-# WATCH_POST_TRAINING = True
-
-# POST_TRAINING_THRESHOLD = 10_000
-
-config = from_cli()
 
 games = Tetris_AGENT.MultiGame(config.num_games)
 
@@ -109,7 +80,6 @@ LOG_PATH = "logs/training_metrics.csv"
 
 SHOULD_TRAIN = True
 
-
 watcher = EpisodeWatcher(games=games, watch=config.watch_training)
 
 main_logs = [
@@ -133,7 +103,9 @@ main_logs = [
 
 action_headers = [f"a_{i}_count" for i in range(41)]
 
-main_logger = EpisodeLogger(config.log_every_episodes, log_path=LOG_PATH, data_logs=main_logs)
+run = Run(config, {})
+
+main_logger = run.csv("training_metrics.csv", main_logs)
 
 log_counter = Counter(config.log_every_episodes)
 
@@ -300,7 +272,7 @@ while True:
                     average_holes / interval_steps,
                     average_wells / interval_steps
                 ]
-                main_logger.csv_log(log_data=log_data)
+                main_logger.log(log_data=log_data)
 
                 average_landing_height = 0
                 average_eroded_cells = 0

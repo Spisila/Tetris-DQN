@@ -1,53 +1,36 @@
 
-import os
-import csv
+import os, csv, json, datetime
+from dataclasses import asdict
 
-class EpisodeLogger:
+class CSVLogger:
 
-    log_counter = 0
-
-    episode_count = 0
-    pieces_placed_sum = 0
-    lines_cleared_sum = 0
-
-    def __init__(self, log_counter_max, log_path, data_logs):
-        self.log_counter_max = log_counter_max
+    def __init__(self,  log_path, data_logs):
         self.log_path = log_path
-
-        
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
         
         with open(self.log_path, mode='w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(data_logs)
 
-    @classmethod
-    def console_log_episode(cls, pieces_placed, lines_cleared) :
-
-        cls.pieces_placed_sum += pieces_placed
-        cls.lines_cleared_sum += lines_cleared
-
-        print("EPISODE = "                            + str(cls.episode_count)     + 
-            " | TOTAL PIECES PLACED = "               + str(cls.pieces_placed_sum) + 
-            " | PIECES PLACED IN EPISODE INTERVAL = " + str(pieces_placed) +
-            " | TOTAL LINES = "                       + str(cls.lines_cleared_sum) +
-            " | LINES CLEARED IN EPISODE INTERVAL = " + str(lines_cleared))
-        cls.reset_log_counter()
-
-
-    def csv_log(cls, log_data) :
-
-        # row = [interval_time,
-        #        episode_interval, 
-        #        pieces_placed, 
-        #        lines_cleared,
-        #        epsilon] + [action_selection_counts[i] for i in range(len(action_selection_counts))]
-        
-        # row = [interval_time,
-        #        episode_interval, 
-        #        pieces_placed, 
-        #        lines_cleared,
-        #        epsilon]
+    def log(cls, log_data) :
         with open(cls.log_path, mode='a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(log_data)
+
+
+class Run:
+    def __init__(self, configs, extra=None, base="logs/runs"):
+        time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        file_name = f"{time_stamp}_{configs.tag}" if configs.tag else time_stamp
+        self.directory = os.path.join(base, file_name)
+        os.makedirs(self.directory)
+        self.save_configs(configs=configs, extra=extra or {} )
+
+    def csv(self, name, header) :
+        return CSVLogger(os.path.join(self.directory, name), header)
+
+    def save_configs(self, configs, extra) :
+        data = {**asdict(configs), **extra}
+        json_path = os.path.join(self.directory, "config.json")
+        with open(json_path, "w") as f:
+            json.dump(data, f, indent=2)
+
