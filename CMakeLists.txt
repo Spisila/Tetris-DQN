@@ -72,23 +72,23 @@ target_link_libraries(GEORGE_TESTS PRIVATE raylib gtest_main)
 
 gtest_discover_tests(GEORGE_TESTS)
 
-# pybind11_add_module(Tetris_AGENT 
-#     include/rl/rl_env.hpp
-#     src/rl/rl_env.cpp
-#     src/core/game_renderer.cpp
-#     src/rl/multi_game.cpp
-#     ${CORE_SOURCES}
-#     src/bindings.cpp
-# )
+pybind11_add_module(Tetris_AGENT 
+    include/rl/rl_env.hpp
+    src/rl/rl_env.cpp
+    src/core/game_renderer.cpp
+    src/rl/multi_game.cpp
+    ${CORE_SOURCES}
+    src/bindings.cpp
+)
 
-# target_link_libraries(Tetris_AGENT PRIVATE raylib)
+target_link_libraries(Tetris_AGENT PRIVATE raylib)
 
-# set_target_properties(Tetris_AGENT PROPERTIES
-#     PREFIX ""
-#     SUFFIX ".pyd"
-#     LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
-#     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
-# )
+set_target_properties(Tetris_AGENT PROPERTIES
+    PREFIX ""
+    SUFFIX ".pyd"
+    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
+)
 
 set_target_properties(GEORGE PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"

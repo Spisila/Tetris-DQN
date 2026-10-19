@@ -19,6 +19,7 @@ Game::Game(int _id)
     piece_queue.generatePieceQueue();
     piece_queue.updatePieceQueue();
     game_board.setPiece(static_cast<PieceType>(piece_queue.getPieceQueue().at(0)));
+    piece_queue.updatePieceQueue();
 }
 
 Game::~Game()

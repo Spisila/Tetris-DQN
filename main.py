@@ -150,6 +150,9 @@ perf_measure_counter = 0
 perf_measure_max = 500
 perf_measurments_taken = 0
 
+post_training_log_counter = 0
+post_training_log_max = 100
+
 print("Before loop")
 
 while True:
@@ -161,7 +164,7 @@ while True:
     watcher.check_should_watch_episodes()
 
     if episode_interval >= config.post_training_threshold :
-        watcher.should_watch = True
+        # watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
 
@@ -321,13 +324,13 @@ while True:
         back_propagation_perf_timer.reset_total()
 
         perf_measurments_taken += 1
-        print(f"\nMEASUREMENT = {perf_measurments_taken}\n")
-        print(f"Average time to make a full loop = {average_full_loop_time}")
-        print(f"Average time to look ahead = {average_look_ahead_time}")
-        print(f"Average time to step all = {average_step_all_time}")
-        print(f"Average time to process steps = {average_step_processing_time}")
-        print(f"    Average time to sample replay buffer = {average_buffer_batching_time}")
-        print(f"    Average time to do backpropagation = {average_back_propagation_time}")
+        # print(f"\nMEASUREMENT = {perf_measurments_taken}\n")
+        # print(f"Average time to make a full loop = {average_full_loop_time}")
+        # print(f"Average time to look ahead = {average_look_ahead_time}")
+        # print(f"Average time to step all = {average_step_all_time}")
+        # print(f"Average time to process steps = {average_step_processing_time}")
+        # print(f"    Average time to sample replay buffer = {average_buffer_batching_time}")
+        # print(f"    Average time to do backpropagation = {average_back_propagation_time}")
 
         perf_measure_counter = 0
 
