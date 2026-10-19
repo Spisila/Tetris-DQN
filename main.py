@@ -24,6 +24,8 @@ sys.path.append(agent_path)
 
 from Release import Tetris_AGENT
 
+torch.set_num_threads(2)
+
 def back_propagation(samples) :
 
     old_states_matrix =  np.array([sample[0] for sample in samples])
@@ -176,6 +178,8 @@ full_loop_perf_timer = Timer()
 look_head_perf_timer = Timer()
 step_all_perf_timer = Timer()
 step_processing_perf_timer = Timer()
+back_propagation_perf_timer = Timer()
+buffer_batching_perf_timer = Timer()
 
 perf_measure_counter = 0
 perf_measure_max = 50
@@ -264,8 +268,12 @@ while True:
             pieces_placed_interval += 1
 
             if buffer.size() > BUFFER_SIZE_TILL_START_TRAINING and SHOULD_TRAIN == True :
+                buffer_batching_perf_timer.start_timer()
                 experience_samples = buffer.sample(BUFFER_SAMPLE_SIZE)
+                buffer_batching_perf_timer.restart_timer()
+                back_propagation_perf_timer.start_timer()
                 log_loss = back_propagation(experience_samples)
+                back_propagation_perf_timer.restart_timer()
 
         if step_i.lost :
             # games.resetThis(i)
@@ -342,19 +350,25 @@ while True:
         average_look_ahead_time = look_head_perf_timer.get_total() / perf_measure_max
         average_step_all_time = step_all_perf_timer.get_total() / perf_measure_max
         average_step_processing_time = step_processing_perf_timer.get_total() / perf_measure_max
+        average_buffer_batching_time = buffer_batching_perf_timer.get_total() / perf_measure_max
+        average_back_propagation_time = back_propagation_perf_timer.get_total() / perf_measure_max
 
         full_loop_perf_timer.reset_total()
         
         look_head_perf_timer.reset_total()
         step_all_perf_timer.reset_total()
         step_processing_perf_timer.reset_total()
+        buffer_batching_perf_timer.reset_total()
+        back_propagation_perf_timer.reset_total()
 
         perf_measurments_taken += 1
         print(f"\nMEASUREMENT = {perf_measurments_taken}\n")
         print(f"Average time to make a full loop = {average_full_loop_time}")
-        print(f"Average time to look ahead time = {average_look_ahead_time}")
-        print(f"Average time to step all time = {average_step_all_time}")
-        print(f"Average time to process steps time = {average_step_processing_time}")
+        print(f"Average time to look ahead = {average_look_ahead_time}")
+        print(f"Average time to step all = {average_step_all_time}")
+        print(f"Average time to process steps = {average_step_processing_time}")
+        print(f"    Average time to sample replay buffer = {average_buffer_batching_time}")
+        print(f"    Average time to do backpropagation = {average_back_propagation_time}")
 
         perf_measure_counter = 0
 
