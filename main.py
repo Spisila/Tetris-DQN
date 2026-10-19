@@ -19,6 +19,9 @@ from python.epsilon_greedy import EpsilonGreedy
 from python.counter import Counter
 from python.timer import Timer
 
+from dataclasses import asdict
+from python.config import from_cli
+
 agent_path = os.path.abspath("./Release")
 sys.path.append(agent_path)
 
@@ -49,44 +52,53 @@ print("Started")
 
 # Hyperparameters
 
-NUM_NEURONS = 128
-NUM_GAMES   = 8
-SET_TARGET_IN_ACTIONS = 500
+# NUM_NEURONS = 128
+# NUM_GAMES   = 8
 
-ACTION_SPACE_SIZE = 40
-VALUE_OUTPUT_DIM = 1    
+# INPUT_DIMENSIONS = 67
+# ACTION_SPACE_SIZE = 40
 
-INPUT_DIMENSIONS = 67
+# VALUE_OUTPUT_DIM = 1    
 
-EPSILON_MIN = 0.01
-EPSILON_REDUCTION = 0.00005
+# SET_TARGET_IN_ACTIONS = 500
 
+# EPSILON_MIN = 0.01
+# EPSILON_REDUCTION = 0.00005
 
+# # GAMMA
+# LR_START = 1e-3
+# LR_MIN = 1e-5
+# LR_DECAY_STEPS = 300_000     
+# BUFFER_SAMPLE_SIZE = 256
+# BUFFER_SIZE_TILL_START_TRAINING = 10_000
 
-LR_START = 1e-3
-LR_MIN = 1e-5
-LR_DECAY_STEPS = 300_000     
+# LOG_TRAINING_IN_EPISODES = 10
 
-games = Tetris_AGENT.MultiGame(NUM_GAMES)
+# WATCH_TRANING = False
+# WATCH_POST_TRAINING = True
 
-model        = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
-target_model = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
+# POST_TRAINING_THRESHOLD = 10_000
 
-optimizer    = optim.Adam(model.parameters(), lr=LR_START)
+config = from_cli()
+
+games = Tetris_AGENT.MultiGame(config.num_games)
+
+model        = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
+target_model = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
+
+optimizer    = optim.Adam(model.parameters(), lr=config.lr_start)
 scheduler = optim.lr_scheduler.LambdaLR(
     optimizer,
-    lr_lambda=lambda step: max(LR_MIN / LR_START, 0.1 ** (step / LR_DECAY_STEPS))
+    lr_lambda=lambda step: max(config.lr_min / config.lr_start, 0.1 ** (step / config.lr_decay_steps))
 )
 
 criterion    = nn.SmoothL1Loss()
 
-BUFFER_SAMPLE_SIZE = 256
-buffer         = ReplayBuffer(capacity=250_000)
-BUFFER_SIZE_TILL_START_TRAINING = 10_000
+buffer         = ReplayBuffer(capacity=config.buffer_capacity)
 
-epsilon_greedy = EpsilonGreedy(output_size=ACTION_SPACE_SIZE, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
+epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=config.epsilon_min, reduction_amount=config.epsilon_reduction) 
 
-action_selection_counts = np.zeros(ACTION_SPACE_SIZE, dtype=int)
+action_selection_counts = np.zeros(config.action_space_size, dtype=int)
 
 games.resetAll()
 state = np.array(games.getStates())
@@ -94,16 +106,11 @@ state = np.array(games.getStates())
 # LOGGER
 
 LOG_PATH = "logs/training_metrics.csv"
-LOG_TRAINING_IN_EPISODES = 10
 
 SHOULD_TRAIN = True
 
-WATCH_TRANING = False
 
-WATCH_POST_TRAINING = True
-POST_TRAINING_THRESHOLD = 10_000
-
-watcher = EpisodeWatcher(games=games, watch=WATCH_TRANING)
+watcher = EpisodeWatcher(games=games, watch=config.watch_training)
 
 main_logs = [
             "total_time",
@@ -126,9 +133,9 @@ main_logs = [
 
 action_headers = [f"a_{i}_count" for i in range(41)]
 
-main_logger = EpisodeLogger(LOG_TRAINING_IN_EPISODES, log_path=LOG_PATH, data_logs=main_logs)
+main_logger = EpisodeLogger(config.log_every_episodes, log_path=LOG_PATH, data_logs=main_logs)
 
-log_counter = Counter(LOG_TRAINING_IN_EPISODES)
+log_counter = Counter(config.log_every_episodes)
 
 interval_timer = Timer()
 interval_timer.start_timer()
@@ -143,7 +150,7 @@ episode_interval = 0
 
 total_training_time = 0
 
-action_count = NUM_GAMES
+action_count = config.num_games
 
 log_loss = 0
 
@@ -183,7 +190,7 @@ while True:
     
     watcher.check_should_watch_episodes()
 
-    if episode_interval >= POST_TRAINING_THRESHOLD :
+    if episode_interval >= config.post_training_threshold :
         watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
@@ -252,16 +259,15 @@ while True:
             pieces_placed += 1
             pieces_placed_interval += 1
 
-            if buffer.size() > BUFFER_SIZE_TILL_START_TRAINING and SHOULD_TRAIN == True :
+            if buffer.size() > config.train_start and SHOULD_TRAIN == True :
                 buffer_batching_perf_timer.start_timer()
-                experience_samples = buffer.sample(BUFFER_SAMPLE_SIZE)
+                experience_samples = buffer.sample(config.batch_size)
                 buffer_batching_perf_timer.restart_timer()
                 back_propagation_perf_timer.start_timer()
                 log_loss = back_propagation(experience_samples)
                 back_propagation_perf_timer.restart_timer()
 
         if step_i.lost :
-            # games.resetThis(i)
             games_to_reset.append(i)
             episode_interval += 1
 
@@ -323,7 +329,7 @@ while True:
     for game in games_to_reset :
         games.resetThis(game)
 
-    epsilon_greedy.epsilon = np.interp(episode_interval, [0, POST_TRAINING_THRESHOLD], [1, EPSILON_MIN])
+    epsilon_greedy.epsilon = np.interp(episode_interval, [0, config.post_training_threshold], [1, config.epsilon_min])
 
     full_loop_perf_timer.restart_timer()
 
