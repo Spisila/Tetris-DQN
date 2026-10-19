@@ -13,5 +13,12 @@ class Timer :
   def restart_timer(cls) :
     end_time = time.perf_counter()
     elapsed = end_time - cls.interval_timer
+    cls.total_time += elapsed
     cls.interval_timer = end_time
     return elapsed
+
+  def get_total(cls) :
+    return cls.total_time
+
+  def reset_total(cls) :
+    cls.total_time = 0

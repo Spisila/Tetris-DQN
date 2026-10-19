@@ -22,7 +22,7 @@ from python.timer import Timer
 agent_path = os.path.abspath("./Release")
 sys.path.append(agent_path)
 
-from Debug import Tetris_AGENT
+from Release import Tetris_AGENT
 
 def back_propagation(samples) :
 
@@ -169,9 +169,23 @@ average_column_transitions = 0
 average_holes = 0
 average_wells = 0
 
-feature_samples = [] 
+# Performance timers
+
+full_loop_perf_timer = Timer()
+
+look_head_perf_timer = Timer()
+step_all_perf_timer = Timer()
+step_processing_perf_timer = Timer()
+
+perf_measure_counter = 0
+perf_measure_max = 50
+perf_measurments_taken = 0
+
+print("Before loop")
 
 while True:
+
+    full_loop_perf_timer.start_timer()
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
@@ -182,7 +196,10 @@ while True:
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
 
+    look_head_perf_timer.start_timer()
     look_ahead = games.lookAheadAll()
+    look_head_perf_timer.restart_timer()
+
     test_vs = []
 
     for i in range(len(look_ahead)) :
@@ -213,7 +230,9 @@ while True:
     for i in range(len(action_indexes)) :
         action_enums.append(Tetris_AGENT.PreciseActions(action_indexes[i]))
 
+    step_all_perf_timer.start_timer()
     step_data = games.stepAll(action_enums)
+    step_all_perf_timer.restart_timer()
 
     global_steps += len(step_data)
     interval_steps += len(step_data)
@@ -230,6 +249,7 @@ while True:
 
     games_to_reset = []
 
+    step_processing_perf_timer.start_timer()
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
@@ -293,7 +313,9 @@ while True:
                 pieces_placed_interval = 0
                 interval_steps = 0
                 log_rewards = 0
-            
+
+    step_processing_perf_timer.restart_timer()
+
     for i in range(len(state)) :
         buffer.push(
             state[i], 
@@ -309,3 +331,30 @@ while True:
         games.resetThis(game)
 
     epsilon_greedy.reduce_epsilon()
+
+    full_loop_perf_timer.restart_timer()
+
+    perf_measure_counter += 1
+    
+    if perf_measure_counter >= perf_measure_max :
+        average_full_loop_time = full_loop_perf_timer.get_total() / perf_measure_max
+    
+        average_look_ahead_time = look_head_perf_timer.get_total() / perf_measure_max
+        average_step_all_time = step_all_perf_timer.get_total() / perf_measure_max
+        average_step_processing_time = step_processing_perf_timer.get_total() / perf_measure_max
+
+        full_loop_perf_timer.reset_total()
+        
+        look_head_perf_timer.reset_total()
+        step_all_perf_timer.reset_total()
+        step_processing_perf_timer.reset_total()
+
+        perf_measurments_taken += 1
+        print(f"\nMEASUREMENT = {perf_measurments_taken}\n")
+        print(f"Average time to make a full loop = {average_full_loop_time}")
+        print(f"Average time to look ahead time = {average_look_ahead_time}")
+        print(f"Average time to step all time = {average_step_all_time}")
+        print(f"Average time to process steps time = {average_step_processing_time}")
+
+        perf_measure_counter = 0
+
