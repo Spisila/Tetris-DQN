@@ -58,6 +58,7 @@ public:
 
   int getCurrentPieceTypeFormatted() const;
   int getCurrentPieceType() const;
+  int getCurrentTypeWithRotation() const;
 
   Position getPivotPosition() const;
   const std::array<Position, 4> getAllPositions() const;

@@ -5,7 +5,14 @@ enum class CellState
   EMPTY,
   SPAWN,
   ACTIVE,
-  FILLED
+
+  FILLED_I,
+  FILLED_O,
+  FILLED_T,
+  FILLED_S,
+  FILLED_Z,
+  FILLED_J,
+  FILLED_L
 };
 
 enum class Actions
@@ -72,6 +79,17 @@ enum class PreciseActions
   ROTATION_3_COLUMN_9,
 
   HOLD,
+};
+
+enum class PieceTypeNoRotation
+{
+  I,
+  J,
+  L,
+  O,
+  S,
+  T,
+  Z
 };
 
 // index + (currn +/- 1) mod(4)

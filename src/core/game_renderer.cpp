@@ -3,6 +3,28 @@
 GameRenderer::GameRenderer(Game &_game) : game(_game)
 {
 }
+Color GameRenderer::pieceToColor(CellState piece)
+{
+  switch (piece)
+  {
+  case CellState::FILLED_I:
+    return SKYBLUE;
+  case CellState::FILLED_O:
+    return YELLOW;
+  case CellState::FILLED_T:
+    return PURPLE;
+  case CellState::FILLED_S:
+    return GREEN;
+  case CellState::FILLED_Z:
+    return RED;
+  case CellState::FILLED_J:
+    return DARKBLUE;
+  case CellState::FILLED_L:
+    return ORANGE;
+  default:
+    return BOARD_COLOR;
+  }
+}
 
 void GameRenderer::drawBoard(const Game &game)
 {
@@ -25,9 +47,9 @@ void GameRenderer::drawBoard(const Game &game)
         cell_color = BOARD_COLOR;
       }
 
-      if (cells[x][y] == CellState::FILLED)
+      if (board.isCellFilled(x, y))
       {
-        cell_color = FILLED_COLOR;
+        cell_color = pieceToColor(cells[x][y]);
       }
 
       if (cells[x][y] == CellState::ACTIVE)

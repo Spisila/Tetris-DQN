@@ -37,6 +37,28 @@ int Tetromino::getCurrentPieceTypeFormatted() const
   }
 }
 
+int Tetromino::getCurrentTypeWithRotation() const
+{
+  if (static_cast<int>(current_piece_type) < 4)
+    return 0;
+  else if (static_cast<int>(current_piece_type) >= 4 && static_cast<int>(current_piece_type) < 8)
+    return 1;
+  else if (static_cast<int>(current_piece_type) >= 8 && static_cast<int>(current_piece_type) < 12)
+    return 2;
+  else if (static_cast<int>(current_piece_type) >= 12 && static_cast<int>(current_piece_type) < 16)
+    return 3;
+  else if (static_cast<int>(current_piece_type) >= 16 && static_cast<int>(current_piece_type) < 20)
+    return 4;
+  else if (static_cast<int>(current_piece_type) >= 20 && static_cast<int>(current_piece_type) < 24)
+    return 5;
+  else if (static_cast<int>(current_piece_type) >= 24 && static_cast<int>(current_piece_type) < 28)
+    return 6;
+  else
+  {
+    return 0;
+  }
+}
+
 int Tetromino::getCurrentPieceType() const
 {
   return static_cast<int>(current_piece_type);
@@ -134,7 +156,7 @@ PieceType Tetromino::changeTetrominoeRotation(Rotation rot)
     break;
   }
 
-  int new_rotated_piece = general_index + ((current_index + step) % 4);
+  int new_rotated_piece = general_index + ((static_cast<int>(current_piece_type) + step) % 4);
 
   if (new_rotated_piece < 0)
     new_rotated_piece += 4;

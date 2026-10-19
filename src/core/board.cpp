@@ -20,6 +20,15 @@ Board::~Board()
 {
 }
 
+bool Board::isCellFilled(int x, int y) const
+{
+    if (board[x][y] >= CellState::FILLED_I)
+    {
+        return true;
+    }
+    return false;
+}
+
 std::array<std::array<CellState, BOARD_SIZE_Y>, BOARD_SIZE_X> Board::getBoardCells() const
 {
     return board;
@@ -34,7 +43,7 @@ std::array<int, BOARD_SIZE_X> Board::getBoardHeight() const
     {
         for (int y = 0; y < board.at(x).size(); y++)
         {
-            if (board.at(x).at(y) == CellState::FILLED)
+            if (isCellFilled(x, y))
             {
                 heights.at(x)++;
             }
@@ -67,7 +76,7 @@ std::array<int, BOARD_SIZE_X> Board::getColumnTopHeights() const
     {
         for (int y = 0; y < BOARD_SIZE_Y; y++)
         {
-            if (board[x][y] == CellState::FILLED)
+            if (isCellFilled(x, y))
             {
                 heights[x] = BOARD_SIZE_Y - y; // primeira célula preenchida de cima para baixo
                 break;
@@ -98,7 +107,7 @@ int Board::getAmountOfHoles() const
 
     for (int x = 0; x < board.size(); x++)
     {
-        for (int y = 0; y < board.at(x).size(); y++)
+        for (int y = 0; y < board[x].size(); y++)
         {
 
             // If is the first line there can be no empty cell above it
@@ -107,13 +116,13 @@ int Board::getAmountOfHoles() const
                 continue;
             }
 
-            auto cell_i = board.at(x).at(y);
-            auto cell_above = board.at(x).at(y - 1);
+            auto cell_i = board[x][y];
+            auto cell_above = board[x][y - 1];
 
             if (cell_i == CellState::EMPTY)
             {
 
-                if (cell_above == CellState::FILLED)
+                if (isCellFilled(x, y - 1))
                 {
                     holes++;
                 }
@@ -136,7 +145,7 @@ int Board::getRugosity() const
 
         int difference = 0;
 
-        difference = column_heights.at(i) - column_heights.at(i + 1);
+        difference = column_heights[i] - column_heights[i + 1];
 
         rugosity += std::abs(difference);
     }
@@ -150,22 +159,21 @@ int Board::getRowTransitions() const
 
     for (int y = 0; y < BOARD_SIZE_Y; y++)
     {
-        CellState previous = CellState::FILLED; // parede esquerda conta como preenchida
+        bool previous = true; // parede esquerda conta como preenchida
 
         for (int x = 0; x < BOARD_SIZE_X; x++)
         {
-            bool current_filled = (board[x][y] == CellState::FILLED);
-            bool previous_filled = (previous == CellState::FILLED);
+            bool current_filled = isCellFilled(x, y);
 
-            if (current_filled != previous_filled)
+            if (current_filled != previous)
             {
                 transitions++;
             }
 
-            previous = board[x][y];
+            previous = current_filled;
         }
 
-        if (previous != CellState::FILLED) // parede direita conta como preenchida
+        if (!previous) // parede direita conta como preenchida
         {
             transitions++;
         }
@@ -180,22 +188,21 @@ int Board::getColumnTransitions() const
 
     for (int x = 0; x < BOARD_SIZE_X; x++)
     {
-        CellState previous = CellState::EMPTY; // nada acima da primeira linha
+        bool previous = false; // nada acima da primeira linha
 
         for (int y = 0; y < BOARD_SIZE_Y; y++)
         {
-            bool current_filled = (board[x][y] == CellState::FILLED);
-            bool previous_filled = (previous == CellState::FILLED);
+            bool current_filled = isCellFilled(x, y);
 
-            if (current_filled != previous_filled)
+            if (current_filled != previous)
             {
                 transitions++;
             }
 
-            previous = board[x][y];
+            previous = current_filled;
         }
 
-        if (previous != CellState::FILLED) // chão conta como preenchido
+        if (!previous) // chão conta como preenchido
         {
             transitions++;
         }
@@ -214,9 +221,9 @@ int Board::getWellSums() const
 
         for (int y = 0; y < BOARD_SIZE_Y; y++)
         {
-            bool is_empty = (board[x][y] != CellState::FILLED);
-            bool left_filled = (x == 0) ? true : (board[x - 1][y] == CellState::FILLED);
-            bool right_filled = (x == BOARD_SIZE_X - 1) ? true : (board[x + 1][y] == CellState::FILLED);
+            bool is_empty = !isCellFilled(x, y);
+            bool left_filled = (x == 0) ? true : isCellFilled(x - 1, y);
+            bool right_filled = (x == BOARD_SIZE_X - 1) ? true : isCellFilled(x + 1, y);
 
             if (is_empty && left_filled && right_filled)
             {
@@ -281,7 +288,7 @@ int Board::calculateErodedPieceCells(const std::array<Position, 4> &piece_positi
 
         for (int x = 0; x < BOARD_SIZE_X; x++)
         {
-            if (board[x][row] != CellState::FILLED)
+            if (!isCellFilled(x, row))
             {
                 row_full = false;
                 break;
@@ -485,7 +492,7 @@ bool Board::checkCollisions(std::array<Position, 4> projected_positions)
 
     for (Position pos : projected_positions)
     {
-        if (board[pos.x][pos.y] == CellState::FILLED)
+        if (isCellFilled(pos.x, pos.y))
         {
             return true;
         }
@@ -543,7 +550,7 @@ int Board::clearLines()
         for (int x = 0; x < BOARD_SIZE_X; x++)
         {
 
-            if (board[x][line] == CellState::FILLED)
+            if (isCellFilled(x, line))
             {
                 filled_count++;
             }
@@ -580,7 +587,7 @@ void Board::clearBoard()
     {
         for (int y = 0; y < board[x].size(); y++)
         {
-            if (board[x][y] == CellState::FILLED)
+            if (isCellFilled(x, y))
             {
                 board[x][y] = CellState::EMPTY;
             }

@@ -131,11 +131,46 @@ int Game::getClearedLines()
 int Game::pieceWasSet()
 {
 
-    auto tetromino_positions = game_board.getBoardTetromino().getAllPositions();
+    auto tetromino = game_board.getBoardTetromino();
+    auto piece_type = static_cast<PieceTypeNoRotation>(tetromino.getCurrentTypeWithRotation());
+
+    auto tetromino_positions = tetromino.getAllPositions();
 
     auto next_piece_in_queue = static_cast<PieceType>(piece_queue.getPieceQueue().at(0));
 
-    game_board.setTetrominoCellsStates(CellState::FILLED, tetromino_positions);
+    switch (piece_type)
+    {
+    case PieceTypeNoRotation::I:
+        game_board.setTetrominoCellsStates(CellState::FILLED_I, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::O:
+        game_board.setTetrominoCellsStates(CellState::FILLED_O, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::T:
+        game_board.setTetrominoCellsStates(CellState::FILLED_T, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::S:
+        game_board.setTetrominoCellsStates(CellState::FILLED_S, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::Z:
+        game_board.setTetrominoCellsStates(CellState::FILLED_Z, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::J:
+        game_board.setTetrominoCellsStates(CellState::FILLED_J, tetromino_positions);
+        break;
+
+    case PieceTypeNoRotation::L:
+        game_board.setTetrominoCellsStates(CellState::FILLED_L, tetromino_positions);
+        break;
+
+    default:
+        break;
+    }
 
     std::copy(std::begin(tetromino_positions), std::end(tetromino_positions), std::begin(last_piece_placed_positions));
 

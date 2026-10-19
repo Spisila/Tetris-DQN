@@ -58,6 +58,8 @@ public:
 
   // Methods
 
+  bool isCellFilled(int x, int y) const;
+
   bool moveTetromino(MovementDirection dir);
   void moveTetrominoToColumn(int column);
   bool rotateTetromino(Rotation rot);

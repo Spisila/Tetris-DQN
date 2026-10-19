@@ -7,6 +7,16 @@ constexpr Color SPAWN_COLOR = Color{75, 75, 75, 255};
 constexpr Color BOARD_COLOR = Color{15, 15, 15, 255};
 constexpr Color FILLED_COLOR = Color{100, 100, 100, 255};
 
+constexpr std::array PIECE_COLORS = {
+  SKYBLUE, // FILLED_I
+  DARKBLUE,// FILLED_J
+  ORANGE,   // FILLED_L
+  YELLOW,  // FILLED_O
+  GREEN,   // FILLED_S
+  PURPLE,  // FILLED_T
+  RED,     // FILLED_Z
+};
+
 constexpr int SCREEN_WIDTH = 1800;
 constexpr int SCREEN_HEIGHT = 900;
 constexpr int CELL_SIZE = 30;
@@ -22,8 +32,12 @@ class GameRenderer
 private:
   Game &game;
 
+  std::array<std::array<CellState, BOARD_SIZE_Y>, BOARD_SIZE_X> rendering_board;
+
 public:
   GameRenderer(Game &game);
+
+  Color pieceToColor(CellState piece);
 
   void initWindow();
 
@@ -35,4 +49,3 @@ public:
 
   char pieceTypeToChar(PieceType piece);
 };
-

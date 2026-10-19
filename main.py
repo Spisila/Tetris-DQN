@@ -24,102 +24,9 @@ sys.path.append(agent_path)
 
 from Debug import Tetris_AGENT
 
-
-def sigmoid_scale(x, k=5.0):
-    return (2.0 / (1.0 + np.exp(-x / k))) - 1.0
-
-def get_all_current_state(games: Tetris_AGENT.MultiGame) :
-    
-    state_data = games.getStates()
-    # scaled_states = []
-
-    # for i in range(len(state_data)) :
-        
-    #     landing_height = sigmoid_scale(state_data[i][0], 10)
-    #     eroded_cells =sigmoid_scale( state_data[i][1], 10)
-    #     row_transitions = sigmoid_scale(state_data[i][2], 10)
-    #     column_transitions = sigmoid_scale(state_data[i][3], 10)
-    #     holes = sigmoid_scale(state_data[i][4], 10)
-    #     wells = sigmoid_scale(state_data[i][5], 10)
-        
-    #     current_piece_tensor = torch.tensor(state_data[i][6], dtype=torch.long)
-    #     hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
-
-    #     queue_tensor = torch.tensor(state_data[i][7:], dtype=torch.long)
-    #     hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
-
-    #     flat_hot_one = hot_one_piece_queue.flatten()
-
-    #     concat = np.concatenate([
-    #         [landing_height], 
-    #         [eroded_cells], 
-    #         [row_transitions], 
-    #         [column_transitions], 
-    #         [holes], 
-    #         [wells], 
-    #         hot_one_current_piece.numpy(), 
-    #         flat_hot_one])
-        
-    #     scaled_states.append(concat)
-
-    return state_data
-
-def scale_test_states(tests) :
-    
-    scaled_tests = []
-
-    for i in range(len(tests)) :
-
-        landing_height = sigmoid_scale(tests[i][0])
-        eroded_cells = sigmoid_scale(tests[i][1])
-        row_transitions = sigmoid_scale(tests[i][2])
-        column_transitions = sigmoid_scale(tests[i][3])
-        holes = sigmoid_scale(tests[i][4])
-        wells = sigmoid_scale(tests[i][5])
-
-        current_piece_tensor = torch.tensor(tests[i][6], dtype=torch.long)
-        hot_one_current_piece = F.one_hot(current_piece_tensor, num_classes=7)
-
-        queue_tensor = torch.tensor(tests[i][7:], dtype=torch.long)
-        hot_one_piece_queue = F.one_hot(queue_tensor, num_classes=7)
-
-        flat_hot_one = hot_one_piece_queue.flatten()
-
-        concat = np.concatenate([
-            [landing_height], 
-            [eroded_cells], 
-            [row_transitions], 
-            [column_transitions], 
-            [holes], 
-            [wells], 
-            hot_one_current_piece, 
-            flat_hot_one])
-        
-        scaled_tests.append(concat)
-
-
-    return scaled_tests
-
-def print_current_state(estado):
-    
-    agg_height = estado[0]
-    holes      = estado[1]
-    rugosity   = estado[2]
-    piece      = int(estado[3])
-    
-    queue      = [int(p) for p in estado[4:]]
-    
-    print(f"--- State ---")
-    print(f"AGG height:         {agg_height:.4f}")
-    print(f"Holes:              {holes:.4f}")
-    print(f"Rugosity:           {rugosity:.4f}")
-    print(f"Current piece:      {piece}")
-    print(f"Queue:              {queue}")
-
 def back_propagation(samples) :
 
     old_states_matrix =  np.array([sample[0] for sample in samples])
-    old_actions_matrix = np.array([sample[1] for sample in samples])
     old_rewards_matrix = np.array([sample[2] for sample in samples])
     new_states_matrix =  np.array([sample[3] for sample in samples])
     old_dones_matrix   = np.array([sample[4] for sample in samples], dtype=np.float32)
@@ -143,6 +50,7 @@ def back_propagation(samples) :
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
     optimizer.step()
+    scheduler.step()
 
     return loss.item()
 
@@ -165,22 +73,33 @@ INPUT_DIMENSIONS = 67
 EPSILON_MIN = 0.05
 EPSILON_REDUCTION = 0.00005
 
-BUFFER_SAMPLE_SIZE = 128
+LR_START = 1e-3
+LR_MIN = 1e-5
+LR_DECAY_STEPS = 300_000     
 
 games = Tetris_AGENT.MultiGame(NUM_GAMES)
 
 model        = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
 target_model = DQN(input_dim=INPUT_DIMENSIONS, output_dim=VALUE_OUTPUT_DIM, target_max=SET_TARGET_IN_ACTIONS, number_of_neurons=NUM_NEURONS)
-optimizer    = optim.Adam(model.parameters(), lr=0.001)
+
+optimizer    = optim.Adam(model.parameters(), lr=LR_START)
+scheduler = optim.lr_scheduler.LambdaLR(
+    optimizer,
+    lr_lambda=lambda step: max(LR_MIN / LR_START, 0.1 ** (step / LR_DECAY_STEPS))
+)
+
 criterion    = nn.SmoothL1Loss()
 
-buffer         = ReplayBuffer()
+BUFFER_SAMPLE_SIZE = 256
+buffer         = ReplayBuffer(capacity=250_000)
+BUFFER_SIZE_TILL_START_TRAINING = 10_000
+
 epsilon_greedy = EpsilonGreedy(output_size=ACTION_SPACE_SIZE, epsilon_min=EPSILON_MIN, reduction_amount=EPSILON_REDUCTION) 
 
 action_selection_counts = np.zeros(ACTION_SPACE_SIZE, dtype=int)
 
 games.resetAll()
-state = np.array(get_all_current_state(games), dtype=np.float32)
+state = np.array(games.getStates())
 
 # LOGGER
 
@@ -214,16 +133,6 @@ main_logs = [
             "average_holes",
             "average_wells",
             ]
-
-#   STATE :
-#   0 = landing_height
-#   1 = eroded_cells
-#   2 = row_transitions
-#   3 = column_transitions
-#   4 = holes
-#   5 = wells
-#   6: = current piece and piece queue
-
 
 action_headers = [f"a_{i}_count" for i in range(41)]
 
@@ -268,7 +177,7 @@ while True:
     
     watcher.check_should_watch_episodes()
 
-    if episode_interval >= POST_TRAINING_THRESHOLD :
+    if epsilon_greedy.epsilon <= EPSILON_MIN :
         watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
@@ -279,7 +188,7 @@ while True:
     for i in range(len(look_ahead)) :
         py_array = np.array(look_ahead[i])
         test_t = torch.FloatTensor(py_array)
-        test_vs.append(model(test_t).squeeze(-1)) # 8x48
+        test_vs.append(model(test_t).squeeze(-1))
 
 
     action_indexes = []
@@ -317,7 +226,7 @@ while True:
         average_holes += s[4]
         average_wells += s[5]
 
-    next_state = np.array(get_all_current_state(games), dtype=np.float32)
+    next_state = games.getStates()
 
     games_to_reset = []
 
@@ -334,7 +243,7 @@ while True:
             pieces_placed += 1
             pieces_placed_interval += 1
 
-            if buffer.size() > 1000 and SHOULD_TRAIN == True :
+            if buffer.size() > BUFFER_SIZE_TILL_START_TRAINING and SHOULD_TRAIN == True :
                 experience_samples = buffer.sample(BUFFER_SAMPLE_SIZE)
                 log_loss = back_propagation(experience_samples)
 

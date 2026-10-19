@@ -66,6 +66,33 @@ void RLEnv::reset()
   game_env.getBoard().setTetrominoCellsStates(CellState::ACTIVE, game_env.getBoard().getBoardTetromino().getAllPositions());
 }
 
+float RLEnv::delachiereStepReward()
+{
+
+  float landing_height = getGameEnv().getLastLandingHeight();
+  int eroded_cells = getGameEnv().getLastErodedPieceCells();
+  int row_transitions = getGameEnv().getBoard().getRowTransitions();
+  int column_transitions = getGameEnv().getBoard().getColumnTransitions();
+  int holes = getGameEnv().getBoard().getAmountOfHoles();
+  int wells = getGameEnv().getBoard().getWellSums();
+
+  float reward =
+      (-1 * landing_height) +
+      (2 * eroded_cells) +
+      (-1 * row_transitions) +
+      (-1 * column_transitions) +
+      (-4 * holes) +
+      (-1 * wells);
+
+  return reward;
+}
+
+float RLEnv::quadraticStepReward()
+{
+  int lines = getGameEnv().getLinesClearedLast();
+  return 1.0f + (lines * lines) * 10.0f;
+}
+
 StepData RLEnv::calculateReward()
 {
   if (getGameEnv().lost)
@@ -78,25 +105,7 @@ StepData RLEnv::calculateReward()
   {
     getGameEnv().piece_set = false;
 
-    int lines = getGameEnv().getLinesClearedLast();
-    // float landing_height = getGameEnv().getLastLandingHeight();
-    // int eroded_cells = getGameEnv().getLastErodedPieceCells();
-    // int row_transitions = getGameEnv().getBoard().getRowTransitions();
-    // int column_transitions = getGameEnv().getBoard().getColumnTransitions();
-    // int holes = getGameEnv().getBoard().getAmountOfHoles();
-    // int wells = getGameEnv().getBoard().getWellSums();
-
-    // float reward =
-    //     (-1 * landing_height) +
-    //     (2 * eroded_cells) +
-    //     (-1 * row_transitions) +
-    //     (-1 * column_transitions) +
-    //     (-4 * holes) +
-    //     (-1 * wells);
-
-    float reward = 1.0f + (lines * lines) * 10.0f;
-
-    StepData piece_set_step = {reward, true, false};
+    StepData piece_set_step = {quadraticStepReward(), true, false};
     return piece_set_step;
   }
 
@@ -153,15 +162,17 @@ py::array_t<float> RLEnv::getGameState()
 
   auto column_heights = game_env.getBoard().getBoardHeight();
 
-  for (int height : column_heights) {
+  for (int height : column_heights)
+  {
     state[state_index++] = static_cast<float>(height) / BOARD_SIZE_Y;
-  } 
-  
+  }
+
   auto height_differences = game_env.getBoard().getColumnHeightDifferences();
-  
-  for (int diff : height_differences) {
+
+  for (int diff : height_differences)
+  {
     state[state_index++] = sigmoidScale(static_cast<float>(diff), 3.5f);
-  } 
+  }
 
   const Tetromino &current_tetromino = game_env.getBoard().getBoardTetromino();
   const int current_piece_type = current_tetromino.getCurrentPieceType();
