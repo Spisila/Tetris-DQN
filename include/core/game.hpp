@@ -25,35 +25,39 @@ class Game
 {
 private:
   int id;
-  
+
   bool gravity_on = false;
   int gravity_counter = 0;
   int gravity_ticks = 30;
-  
+
   Board game_board{};
   PieceQueue piece_queue{};
-  
+
   int lines_cleared = 0;
   int lines_cleared_last = 0;
-  
+
+  unsigned int single_line_clears = 0;
+  unsigned int double_line_clears = 0;
+  unsigned int triple_line_clears = 0;
+  unsigned int tetris_line_clears = 0;
+
   float last_landing_height = 0.0f;
   int last_eroded_piece_cells = 0;
 
   int score = 0;
-  
+
   std::array<Position, 4> last_piece_placed_positions{
-    Position(0, 0),
-    Position(0, 0),
-    Position(0, 0),
-    Position(0, 0)};
+      Position(0, 0),
+      Position(0, 0),
+      Position(0, 0),
+      Position(0, 0)};
 
 public:
   Actions next_action{Actions::HOLD};
   PreciseActions next_precise_action{PreciseActions::HOLD};
-  
+
   bool lost = false;
   bool piece_set = false;
-  
 
   int hold_piece_index = -1;
   bool hold_used = false;
@@ -83,6 +87,7 @@ public:
   std::array<Position, 4> getLastPiecePlacedPositions() const;
 
   void increaseScore(int lines);
+  std::array<unsigned int, 4> getClearCounts();
   void resetScore();
 
   void setGravity(bool on);

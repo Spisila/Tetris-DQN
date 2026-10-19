@@ -79,7 +79,7 @@ void GameRenderer::drawBoard(const Game &game)
 
 void GameRenderer::initWindow()
 {
-  SetTargetFPS(240);
+  SetTargetFPS(60);
 
   SetTraceLogLevel(LOG_WARNING);
 
@@ -95,8 +95,39 @@ void GameRenderer::drawLoop()
 
   drawBoard(game);
 
-  // DrawText(TextFormat("QUEUE = %d", game.ge), SCREEN_WIDTH / 2 + 400, SCREEN_HEIGHT / 2 - 400, 30, RED);
-  // DrawText(TextFormat("CURRENT = %c", pieceTypeToChar(static_cast<PieceType>(game.getBoard().getBoardTetromino().getCurrentPieceType()))), SCREEN_WIDTH / 2 + 400, SCREEN_HEIGHT / 2 - 360, 30, RED);
+  drawScoreText();
+  drawClearCounts();
+
+  EndDrawing();
+}
+
+void GameRenderer::drawClearCounts()
+{
+  auto clears = game.getClearCounts();
+
+  DrawText(TextFormat("SINGLES = %d", clears[0]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2, 30, WHITE);
+  DrawText(TextFormat("DOUBLES = %d", clears[1]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 50, 30, WHITE);
+  DrawText(TextFormat("TRIPLES = %d", clears[2]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 100, 30, WHITE);
+  DrawText(TextFormat("TETRIS  = %d", clears[3]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 150, 30, WHITE);
+}
+
+void GameRenderer::drawScoreText()
+{
+  DrawText(TextFormat("SCORE = %d", game.getScore()), SCREEN_WIDTH / 2 - 260, SCREEN_HEIGHT / 2 - 375, 30, WHITE);
+}
+
+void GameRenderer::closeWindow()
+{
+  CloseWindow();
+}
+
+void GameRenderer::drawHoldedPiece()
+{
+  DrawText(TextFormat("HOLD = %c", pieceTypeToChar(static_cast<PieceType>(game.hold_piece_index))), SCREEN_WIDTH / 2 - 400, SCREEN_HEIGHT / 2 - 400, 30, RED);
+}
+
+void GameRenderer::drawPieceQueue()
+{
   DrawText(TextFormat("QUEUE = %c %c %c %c %c",
                       pieceTypeToChar(static_cast<PieceType>(game.getPieceQueue().getPieceQueue().at(0))),
                       pieceTypeToChar(static_cast<PieceType>(game.getPieceQueue().getPieceQueue().at(1))),
@@ -104,17 +135,6 @@ void GameRenderer::drawLoop()
                       pieceTypeToChar(static_cast<PieceType>(game.getPieceQueue().getPieceQueue().at(3))),
                       pieceTypeToChar(static_cast<PieceType>(game.getPieceQueue().getPieceQueue().at(4)))),
            SCREEN_WIDTH / 2 + 400, SCREEN_HEIGHT / 2 - 320, 30, RED);
-
-  DrawText(TextFormat("HOLD = %c", pieceTypeToChar(static_cast<PieceType>(game.hold_piece_index))), SCREEN_WIDTH / 2 - 400, SCREEN_HEIGHT / 2 - 400, 30, RED);
-
-  DrawText(TextFormat("SCORE = %d", game.getScore()), SCREEN_WIDTH / 2 - 400, SCREEN_HEIGHT / 2 - 375, 30, WHITE);
-
-  EndDrawing();
-}
-
-void GameRenderer::closeWindow()
-{
-  CloseWindow();
 }
 
 char GameRenderer::pieceTypeToChar(PieceType piece)

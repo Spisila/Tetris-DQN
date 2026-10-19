@@ -8,13 +8,13 @@ constexpr Color BOARD_COLOR = Color{15, 15, 15, 255};
 constexpr Color FILLED_COLOR = Color{100, 100, 100, 255};
 
 constexpr std::array PIECE_COLORS = {
-  SKYBLUE, // FILLED_I
-  DARKBLUE,// FILLED_J
-  ORANGE,   // FILLED_L
-  YELLOW,  // FILLED_O
-  GREEN,   // FILLED_S
-  PURPLE,  // FILLED_T
-  RED,     // FILLED_Z
+    SKYBLUE,  // FILLED_I
+    DARKBLUE, // FILLED_J
+    ORANGE,   // FILLED_L
+    YELLOW,   // FILLED_O
+    GREEN,    // FILLED_S
+    PURPLE,   // FILLED_T
+    RED,      // FILLED_Z
 };
 
 constexpr int SCREEN_WIDTH = 1800;
@@ -43,9 +43,15 @@ public:
 
   void drawLoop();
 
+  void drawClearCounts();
+
+  void drawScoreText();
+
   void closeWindow();
 
   void drawBoard(const Game &game);
+  void drawHoldedPiece();
+  void drawPieceQueue();
 
   char pieceTypeToChar(PieceType piece);
 };

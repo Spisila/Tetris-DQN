@@ -76,8 +76,6 @@ state = np.array(games.getStates())
 
 # LOGGER
 
-LOG_PATH = "logs/training_metrics.csv"
-
 SHOULD_TRAIN = True
 
 watcher = EpisodeWatcher(games=games, watch=config.watch_training)
@@ -112,7 +110,6 @@ log_counter = Counter(config.log_every_episodes)
 
 interval_timer = Timer()
 interval_timer.start_timer()
-
 
 pieces_placed = 0
 pieces_placed_interval = 0
@@ -174,7 +171,6 @@ while True:
     batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
     with torch.inference_mode():
         best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  #Takes the best action from each look ahead
-    
     look_head_perf_timer.restart_timer()
 
     action_indexes = []

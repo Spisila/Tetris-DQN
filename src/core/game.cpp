@@ -107,20 +107,36 @@ void Game::increaseScore(int lines)
         break;
     case 1:
         score += 100;
+        single_line_clears += 1;
         break;
     case 2:
         score += 200;
+        double_line_clears += 1;
         break;
     case 3:
         score += 400;
+        triple_line_clears += 1;
         break;
     case 4:
         score += 1000;
+        tetris_line_clears += 1;
         break;
 
     default:
         break;
     }
+}
+
+std::array<unsigned int, 4> Game::getClearCounts()
+{
+    std::array<unsigned int, 4> clears{};
+
+    clears[0] = single_line_clears;
+    clears[1] = double_line_clears;
+    clears[2] = triple_line_clears;
+    clears[3] = tetris_line_clears;
+
+    return clears;
 }
 
 int Game::getClearedLines()
