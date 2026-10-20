@@ -31,22 +31,6 @@ torch.set_num_threads(2)
 
 config = from_cli()
 
-# def back_propagation(batch):
-#     states, rewards, next_states, dones = batch
-
-#     with torch.no_grad():
-#         target_vs = target_model(next_states).squeeze(-1)
-#         targets = rewards + config.gamma * target_vs * (1.0 - dones)
-
-#     loss = criterion(model(states).squeeze(-1), targets)
-
-#     optimizer.zero_grad()
-#     loss.backward()
-#     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
-#     optimizer.step()
-#     scheduler.step()
-#     return loss.item()
-
 def format_float(f, digits=3) :
     return f"{f:.{digits}f}"
 
@@ -76,63 +60,39 @@ SHOULD_TRAIN = True
 
 watcher = EpisodeWatcher(games=games, watch=config.watch_training)
 
-main_logs = [
-            "total_time",
-            "time_between_intervals", 
-            "steps",
-            "episode", 
-            "pieces_placed", 
-            "lines", 
-            "epsilon",
-            "loss",
-            "rewards",
-            "eroded_cells",
-            "landing_height",
-            "row_transitions",
-            "column_transitions",
-            "holes",
-            "wells",
-            "single_clears",
-            "double_clears",
-            "triple_clears",
-            "tetris_clears",
-            ]
+
+run = Run(config, {})
+
+log_names_to_data = {
+    "total_time": 0,
+    "steps": 0,
+    "episodes": 0,
+    "pieces_placed": 0,
+    "epsilon": 0,
+    "loss": 0,
+    "rewards": 0,
+    "eroded_cells": 0,
+    "landing_height": 0,
+    "row_transitions": 0,
+    "column_transitions": 0,
+    "holes": 0,
+    "wells": 0,
+    "single_clears": 0,
+    "double_clears": 0,
+    "triple_clears": 0,
+    "tetris_clears": 0,
+}
 
 action_headers = [f"a_{i}_count" for i in range(config.action_space_size)]
 action_selection_counts = np.zeros(config.action_space_size, dtype=int)
 
-run = Run(config, {})
-
-main_logger = run.csv("training_metrics.csv", main_logs)
+main_logger = run.csv("training_metrics.csv", list(log_names_to_data.keys()))
 decisions_logger = run.csv("agent_decisions.csv", action_headers)
 
 log_counter = Counter(config.log_every)
 
 interval_timer = Timer()
 interval_timer.start_timer()
-
-pieces_placed = 0
-
-lines_cleared_total_last = 0
-
-episodes = 0
-
-total_training_time = 0
-
-action_count = config.num_games
-
-log_loss = 0
-
-log_rewards = 0
-
-steps = 0
-
-landing_height = 0
-eroded_cells = 0
-row_transitions = 0
-column_transitions = 0
-holes = 0
-wells = 0
 
 # Performance timers
 
@@ -163,8 +123,8 @@ while True:
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
     watcher.check_should_watch_episodes()
-
-    if episodes >= config.post_training_threshold :
+    
+    if log_names_to_data["episodes"] >= config.post_training_threshold :
         # watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
@@ -179,7 +139,7 @@ while True:
 
     action_indexes = []
 
-    for i in range(action_count) :
+    for i in range(config.num_games) :
 
         greedy = epsilon_greedy.greedy()
         
@@ -202,32 +162,31 @@ while True:
     step_all_perf_timer.restart_timer()
 
     for s in state :
-        eroded_cells += s[0]
-        landing_height += s[1]
-        row_transitions += s[2]
-        column_transitions += s[3]
-        holes += s[4]
-        wells += s[5]
+        log_names_to_data["eroded_cells"] += s[0]
+        log_names_to_data["landing_height"] += s[1]
+        log_names_to_data["row_transitions"] += s[2]
+        log_names_to_data["column_transitions"] += s[3]
+        log_names_to_data["holes"] += s[4]
+        log_names_to_data["wells"] += s[5]
 
     next_state = games.getStates()
 
     games_to_reset = []
 
-    steps += len(step_data)
+    log_names_to_data["steps"] += len(step_data)
 
     step_processing_perf_timer.start_timer()
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
 
-
-        log_rewards += step_i.reward
+        log_names_to_data["rewards"] += step_i.reward
 
         if step_i.piece_placed :
 
             model.increase_target_counter()
 
-            pieces_placed += 1
+            log_names_to_data["pieces_placed"] += 1
 
             if buffer.size() > config.train_start and SHOULD_TRAIN == True :
                 
@@ -236,49 +195,33 @@ while True:
                 buffer_batching_perf_timer.restart_timer()
                 
                 back_propagation_perf_timer.start_timer()
-                log_loss = model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
+                log_names_to_data["loss"]= model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
                 back_propagation_perf_timer.restart_timer()
 
             if log_counter.increase_counter() :
-            
-                interval = interval_timer.restart_timer()
-                total_training_time += interval
 
-                lines_cleared_total_now = games.getLinesCleared()
-
+                log_names_to_data["total_time"] += interval_timer.restart_timer()
+                
                 clear_counts = games.getAllClearCounts()
 
-                log_data = [
-                    total_training_time,
-                    interval,
-                    steps,
-                    episodes,
-                    pieces_placed,
-                    lines_cleared_total_now,
-                    epsilon_greedy.epsilon,
-                    log_loss,
-                    log_rewards,
-                    eroded_cells,
-                    landing_height,
-                    row_transitions,
-                    column_transitions,
-                    holes,
-                    wells,
-                    clear_counts[0],
-                    clear_counts[1],
-                    clear_counts[2],
-                    clear_counts[3],
-                ]
-                main_logger.log(log_data=log_data)
+                log_names_to_data["single_clears"] = clear_counts[0]
+                log_names_to_data["double_clears"] = clear_counts[1]
+                log_names_to_data["triple_clears"] = clear_counts[2]
+                log_names_to_data["tetris_clears"] = clear_counts[3]
+
+                log_names_to_data["epsilon"] = epsilon_greedy.epsilon
+
                 decisions_logger.log(log_data=action_selection_counts)
 
+                main_logger.log(log_data=list(log_names_to_data.values()))
+                
                 if SHOULD_TRAIN == False :
                     post_training_log_counter += 1
 
         if step_i.lost :
             games_to_reset.append(i)
 
-            episodes += 1
+            log_names_to_data["episodes"] += 1
 
     step_processing_perf_timer.restart_timer()
 
@@ -296,7 +239,7 @@ while True:
     for game in games_to_reset :
         games.resetThis(game)
 
-    epsilon_greedy.epsilon = np.interp(episodes, [0, config.post_training_threshold], [1, config.epsilon_min])
+    epsilon_greedy.epsilon = np.interp(log_names_to_data["episodes"], [0, config.post_training_threshold], [1, config.epsilon_min])
 
     full_loop_perf_timer.restart_timer()
 
