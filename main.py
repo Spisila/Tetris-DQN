@@ -79,20 +79,19 @@ watcher = EpisodeWatcher(games=games, watch=config.watch_training)
 main_logs = [
             "total_time",
             "time_between_intervals", 
-            "episode_interval", 
+            "steps",
+            "episode", 
             "pieces_placed", 
-            "pieces_placed_interval", 
-            "lines_interval", 
-            "lines_per_piece",
+            "lines", 
             "epsilon",
             "loss",
-            "rewards_interval",
-            "average_eroded_cells",
-            "average_landing_height",
-            "average_row_transitions",
-            "average_column_transitions",
-            "average_holes",
-            "average_wells",
+            "rewards",
+            "eroded_cells",
+            "landing_height",
+            "row_transitions",
+            "column_transitions",
+            "holes",
+            "wells",
             "single_clears",
             "double_clears",
             "triple_clears",
@@ -107,17 +106,16 @@ run = Run(config, {})
 main_logger = run.csv("training_metrics.csv", main_logs)
 decisions_logger = run.csv("agent_decisions.csv", action_headers)
 
-log_counter = Counter(config.log_every_episodes)
+log_counter = Counter(config.log_every)
 
 interval_timer = Timer()
 interval_timer.start_timer()
 
 pieces_placed = 0
-pieces_placed_interval = 0
 
 lines_cleared_total_last = 0
 
-episode_interval = 0
+episodes = 0
 
 total_training_time = 0
 
@@ -127,15 +125,14 @@ log_loss = 0
 
 log_rewards = 0
 
-global_steps = 0
-interval_steps = 0
+steps = 0
 
-average_landing_height = 0
-average_eroded_cells = 0
-average_row_transitions = 0
-average_column_transitions = 0
-average_holes = 0
-average_wells = 0
+landing_height = 0
+eroded_cells = 0
+row_transitions = 0
+column_transitions = 0
+holes = 0
+wells = 0
 
 # Performance timers
 
@@ -167,7 +164,7 @@ while True:
     
     watcher.check_should_watch_episodes()
 
-    if episode_interval >= config.post_training_threshold :
+    if episodes >= config.post_training_threshold :
         # watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
@@ -204,25 +201,25 @@ while True:
     step_data = games.stepAll(action_enums)
     step_all_perf_timer.restart_timer()
 
-    global_steps += len(step_data)
-    interval_steps += len(step_data)
-
     for s in state :
-        average_eroded_cells += s[0]
-        average_landing_height += s[1]
-        average_row_transitions += s[2]
-        average_column_transitions += s[3]
-        average_holes += s[4]
-        average_wells += s[5]
+        eroded_cells += s[0]
+        landing_height += s[1]
+        row_transitions += s[2]
+        column_transitions += s[3]
+        holes += s[4]
+        wells += s[5]
 
     next_state = games.getStates()
 
     games_to_reset = []
 
+    steps += len(step_data)
+
     step_processing_perf_timer.start_timer()
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
+
 
         log_rewards += step_i.reward
 
@@ -231,7 +228,6 @@ while True:
             model.increase_target_counter()
 
             pieces_placed += 1
-            pieces_placed_interval += 1
 
             if buffer.size() > config.train_start and SHOULD_TRAIN == True :
                 
@@ -243,40 +239,31 @@ while True:
                 log_loss = model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
                 back_propagation_perf_timer.restart_timer()
 
-        if step_i.lost :
-            games_to_reset.append(i)
-            episode_interval += 1
-
             if log_counter.increase_counter() :
-
+            
                 interval = interval_timer.restart_timer()
                 total_training_time += interval
 
-                placed_interval = pieces_placed_interval
-
                 lines_cleared_total_now = games.getLinesCleared()
-                lines_cleared_interval = lines_cleared_total_now - lines_cleared_total_last
-                lines_cleared_total_last = lines_cleared_total_now
 
                 clear_counts = games.getAllClearCounts()
 
                 log_data = [
-                    format_float(total_training_time),
-                    format_float(interval),
-                    episode_interval,
+                    total_training_time,
+                    interval,
+                    steps,
+                    episodes,
                     pieces_placed,
-                    placed_interval,
-                    lines_cleared_interval,
-                    format_float(lines_cleared_interval / placed_interval),
-                    format_float(epsilon_greedy.epsilon),
+                    lines_cleared_total_now,
+                    epsilon_greedy.epsilon,
                     log_loss,
                     log_rewards,
-                    average_eroded_cells / interval_steps,
-                    average_landing_height / interval_steps,
-                    average_row_transitions / interval_steps,
-                    average_column_transitions / interval_steps,
-                    average_holes / interval_steps,
-                    average_wells / interval_steps,
+                    eroded_cells,
+                    landing_height,
+                    row_transitions,
+                    column_transitions,
+                    holes,
+                    wells,
                     clear_counts[0],
                     clear_counts[1],
                     clear_counts[2],
@@ -285,21 +272,13 @@ while True:
                 main_logger.log(log_data=log_data)
                 decisions_logger.log(log_data=action_selection_counts)
 
-                average_landing_height = 0
-                average_eroded_cells = 0
-                average_row_transitions = 0
-                average_column_transitions = 0
-                average_holes = 0
-                average_wells = 0
-
-                pieces_placed_interval = 0
-                interval_steps = 0
-                log_rewards = 0
-
                 if SHOULD_TRAIN == False :
                     post_training_log_counter += 1
 
-    # 3 Treinos antes de fazer varios 
+        if step_i.lost :
+            games_to_reset.append(i)
+
+            episodes += 1
 
     step_processing_perf_timer.restart_timer()
 
@@ -317,7 +296,7 @@ while True:
     for game in games_to_reset :
         games.resetThis(game)
 
-    epsilon_greedy.epsilon = np.interp(episode_interval, [0, config.post_training_threshold], [1, config.epsilon_min])
+    epsilon_greedy.epsilon = np.interp(episodes, [0, config.post_training_threshold], [1, config.epsilon_min])
 
     full_loop_perf_timer.restart_timer()
 

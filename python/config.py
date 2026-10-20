@@ -27,7 +27,7 @@ class Config:
   train_start: int = 10_000
 
   # logging e watch
-  log_every_episodes: int = 10
+  log_every: int = 500
   watch_training: bool = False
   watch_post_training: bool = True
   post_training_threshold: int = 10_000
