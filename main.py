@@ -31,26 +31,27 @@ torch.set_num_threads(2)
 
 config = from_cli()
 
-def back_propagation(batch):
-    states, rewards, next_states, dones = batch
+# def back_propagation(batch):
+#     states, rewards, next_states, dones = batch
 
-    with torch.no_grad():
-        target_vs = target_model(next_states).squeeze(-1)
-        targets = rewards + config.gamma * target_vs * (1.0 - dones)
+#     with torch.no_grad():
+#         target_vs = target_model(next_states).squeeze(-1)
+#         targets = rewards + config.gamma * target_vs * (1.0 - dones)
 
-    loss = criterion(model(states).squeeze(-1), targets)
+#     loss = criterion(model(states).squeeze(-1), targets)
 
-    optimizer.zero_grad()
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
-    optimizer.step()
-    scheduler.step()
-    return loss.item()
+#     optimizer.zero_grad()
+#     loss.backward()
+#     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
+#     optimizer.step()
+#     scheduler.step()
+#     return loss.item()
 
 def format_float(f, digits=3) :
     return f"{f:.{digits}f}"
 
 print("Started")
+print("Initialization")
 
 games = Tetris_AGENT.MultiGame(config.num_games)
 
@@ -68,11 +69,6 @@ criterion    = nn.SmoothL1Loss()
 buffer         = ReplayBuffer(capacity=config.buffer_capacity)
 
 epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=config.epsilon_min, reduction_amount=config.epsilon_reduction) 
-
-action_selection_counts = np.zeros(config.action_space_size, dtype=int)
-
-games.resetAll()
-state = np.array(games.getStates())
 
 # LOGGER
 
@@ -97,9 +93,14 @@ main_logs = [
             "average_column_transitions",
             "average_holes",
             "average_wells",
+            "single_clears",
+            "double_clears",
+            "triple_clears",
+            "tetris_clears",
             ]
 
 action_headers = [f"a_{i}_count" for i in range(config.action_space_size)]
+action_selection_counts = np.zeros(config.action_space_size, dtype=int)
 
 run = Run(config, {})
 
@@ -151,7 +152,10 @@ perf_measure_max = 500
 perf_measurments_taken = 0
 
 post_training_log_counter = 0
-post_training_log_max = 100
+post_training_log_max = 500
+
+games.resetAll()
+state = np.array(games.getStates())
 
 print("Before loop")
 
@@ -230,11 +234,13 @@ while True:
             pieces_placed_interval += 1
 
             if buffer.size() > config.train_start and SHOULD_TRAIN == True :
+                
                 buffer_batching_perf_timer.start_timer()
                 experience_samples = buffer.sample(config.batch_size)
                 buffer_batching_perf_timer.restart_timer()
+                
                 back_propagation_perf_timer.start_timer()
-                log_loss = back_propagation(experience_samples)
+                log_loss = model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
                 back_propagation_perf_timer.restart_timer()
 
         if step_i.lost :
@@ -252,6 +258,8 @@ while True:
                 lines_cleared_interval = lines_cleared_total_now - lines_cleared_total_last
                 lines_cleared_total_last = lines_cleared_total_now
 
+                clear_counts = games.getAllClearCounts()
+
                 log_data = [
                     format_float(total_training_time),
                     format_float(interval),
@@ -268,7 +276,11 @@ while True:
                     average_row_transitions / interval_steps,
                     average_column_transitions / interval_steps,
                     average_holes / interval_steps,
-                    average_wells / interval_steps
+                    average_wells / interval_steps,
+                    clear_counts[0],
+                    clear_counts[1],
+                    clear_counts[2],
+                    clear_counts[3],
                 ]
                 main_logger.log(log_data=log_data)
                 decisions_logger.log(log_data=action_selection_counts)
@@ -283,6 +295,11 @@ while True:
                 pieces_placed_interval = 0
                 interval_steps = 0
                 log_rewards = 0
+
+                if SHOULD_TRAIN == False :
+                    post_training_log_counter += 1
+
+    # 3 Treinos antes de fazer varios 
 
     step_processing_perf_timer.restart_timer()
 
@@ -333,4 +350,8 @@ while True:
         # print(f"    Average time to do backpropagation = {average_back_propagation_time}")
 
         perf_measure_counter = 0
+
+    if post_training_log_counter >= post_training_log_max :
+        sys.exit()
+        break
 

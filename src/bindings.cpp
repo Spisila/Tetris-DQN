@@ -99,6 +99,7 @@ PYBIND11_MODULE(Tetris_AGENT, m)
         .def("resetThis", &MultiGame::resetThis, "Reset a specific environment")
 
         .def("getLinesCleared", &MultiGame::getLinesCleared, "Lines cleared")
+        .def("getAllClearCounts", &MultiGame::getAllClearCounts, "Clear Counts")
 
         .def("getStates", &MultiGame::getStates, "Gets the state of all the environments");
 }

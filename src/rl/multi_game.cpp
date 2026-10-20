@@ -175,6 +175,25 @@ void MultiGame::resetThis(int index)
 //   return sum;
 // }
 
+std::array<unsigned int, 4> MultiGame::getAllClearCounts()
+{
+
+  std::array<unsigned int, 4> sum_counts{};
+
+  for (RLEnv &game : games)
+  {
+
+    auto clears = game.getGameEnv().getClearCounts();
+
+    sum_counts[0] += clears[0]; // Singles
+    sum_counts[1] += clears[1]; // Doubles
+    sum_counts[2] += clears[2]; // Triples
+    sum_counts[3] += clears[3]; // Tetris
+  }
+
+  return sum_counts;
+}
+
 int MultiGame::getLinesCleared()
 {
   int sum = 0;

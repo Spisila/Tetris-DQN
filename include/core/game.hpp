@@ -14,13 +14,6 @@
 
 constexpr int piece_queue_size = 5;
 
-// First position is the pivot
-
-// If rotating clockwise, from even to odd multiply by -1
-// If rotating counter-clockwise
-
-// Map the piece types to positions relative to the pivot
-
 class Game
 {
 private:
@@ -70,6 +63,7 @@ public:
 
   int getClearedLines();
   int getLinesClearedLast() const;
+  std::array<unsigned int, 4> getClearCounts();
 
   float getLastLandingHeight() const;
   int getLastErodedPieceCells() const;
@@ -87,7 +81,6 @@ public:
   std::array<Position, 4> getLastPiecePlacedPositions() const;
 
   void increaseScore(int lines);
-  std::array<unsigned int, 4> getClearCounts();
   void resetScore();
 
   void setGravity(bool on);

@@ -20,15 +20,6 @@ Board::~Board()
 {
 }
 
-bool Board::isCellFilled(int x, int y) const
-{
-    if (board[x][y] >= CellState::FILLED_I)
-    {
-        return true;
-    }
-    return false;
-}
-
 std::array<std::array<CellState, BOARD_SIZE_Y>, BOARD_SIZE_X> Board::getBoardCells() const
 {
     return board;
@@ -78,7 +69,7 @@ std::array<int, BOARD_SIZE_X> Board::getColumnTopHeights() const
         {
             if (isCellFilled(x, y))
             {
-                heights[x] = BOARD_SIZE_Y - y; // primeira célula preenchida de cima para baixo
+                heights[x] = BOARD_SIZE_Y - y; // primeira celula preenchida de cima para baixo
                 break;
             }
         }
@@ -100,6 +91,7 @@ std::array<int, BOARD_SIZE_X - 1> Board::getColumnHeightDifferences() const
     return differences;
 }
 
+// Holes = Empty cells with filled cells above
 int Board::getAmountOfHoles() const
 {
 
@@ -153,6 +145,7 @@ int Board::getRugosity() const
     return rugosity;
 }
 
+// Transitions between filled to not filled and vice versa
 int Board::getRowTransitions() const
 {
     int transitions = 0;
@@ -182,6 +175,7 @@ int Board::getRowTransitions() const
     return transitions;
 }
 
+// Transitions between filled to not filled in columns
 int Board::getColumnTransitions() const
 {
     int transitions = 0;
@@ -211,6 +205,7 @@ int Board::getColumnTransitions() const
     return transitions;
 }
 
+// Well = left and right filled with empty in the middle
 int Board::getWellSums() const
 {
     int well_sum = 0;
@@ -240,6 +235,7 @@ int Board::getWellSums() const
     return well_sum;
 }
 
+// Height the piece lands on
 float Board::calculateLandingHeight(const std::array<Position, 4> &piece_positions) const
 {
     float avg_y = 0.0f;
@@ -254,6 +250,7 @@ float Board::calculateLandingHeight(const std::array<Position, 4> &piece_positio
     return static_cast<float>(BOARD_SIZE_Y - 1) - avg_y;
 }
 
+// Number of lines cleared * number of blocks from the placed piece that were eliminated by this placement
 int Board::calculateErodedPieceCells(const std::array<Position, 4> &piece_positions) const
 {
     std::array<int, 4> touched_rows{};
@@ -348,6 +345,15 @@ void Board::setTetrominoCellsStates(CellState state, std::array<Position, 4> pos
     {
         board[pos.x][pos.y] = state;
     }
+}
+
+bool Board::isCellFilled(int x, int y) const
+{
+    if (board[x][y] >= CellState::FILLED_I)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool Board::moveTetromino(MovementDirection dir)

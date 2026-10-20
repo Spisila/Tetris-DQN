@@ -59,6 +59,7 @@ public:
 
   int getSumScore();
   int getLinesCleared();
+  std::array<unsigned int, 4> getAllClearCounts();
 
   std::vector<py::array_t<float>> getStates();
 

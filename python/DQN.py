@@ -1,5 +1,8 @@
 
+import torch
 import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 
 class DQN(nn.Module):
 
@@ -20,7 +23,23 @@ class DQN(nn.Module):
 
     def forward(self, x):
         return self.net(x)
+    
+    def back_propagation(self, batch, target_model, criterion, optimizer, scheduler, config):
+        states, rewards, next_states, dones = batch
 
+        with torch.no_grad():
+            target_vs = target_model(next_states).squeeze(-1)
+            targets = rewards + config.gamma * target_vs * (1.0 - dones)
+
+        loss = criterion(self(states).squeeze(-1), targets)
+
+        optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=10.0)
+        optimizer.step()
+        scheduler.step()
+        return loss.item()
+    
     @classmethod
     def increase_target_counter(cls) :
         cls.set_target_counter += 1

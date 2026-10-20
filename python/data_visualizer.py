@@ -33,7 +33,7 @@ if data_frames :
   plt.figure(figsize=(10,6))
 
   sns.lineplot(data=combined, 
-               x="total_time", 
+               x="episode_interval", 
                y="pieces_placed_interval", 
                hue="Test"
               )
