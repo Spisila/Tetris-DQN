@@ -2,10 +2,13 @@
 import os, csv, json, datetime
 from dataclasses import asdict
 
+from python.counter import Counter
+
 class CSVLogger:
 
-    def __init__(self,  log_path, data_logs):
+    def __init__(self,  log_path, data_logs, log_in):
         self.log_path = log_path
+        self.counter = Counter(log_in)
         
         with open(self.log_path, mode='w', newline='') as f:
             writer = csv.writer(f)
@@ -25,8 +28,8 @@ class Run:
         os.makedirs(self.directory)
         self.save_configs(configs=configs, extra=extra or {} )
 
-    def csv(self, name, header) :
-        return CSVLogger(os.path.join(self.directory, name), header)
+    def csv(self, name, header, log_every) :
+        return CSVLogger(os.path.join(self.directory, name), header, log_every)
 
     def save_configs(self, configs, extra) :
         data = {**asdict(configs), **extra}

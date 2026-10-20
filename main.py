@@ -1,7 +1,6 @@
 
 import os
 import sys
-import time
 
 import numpy as np
 
@@ -60,7 +59,6 @@ SHOULD_TRAIN = True
 
 watcher = EpisodeWatcher(games=games, watch=config.watch_training)
 
-
 run = Run(config, {})
 
 log_names_to_data = {
@@ -70,6 +68,10 @@ log_names_to_data = {
     "pieces_placed": 0,
     "epsilon": 0,
     "loss": 0,
+    "rewards": 0,
+    "greedy_choices": 0,
+    "epsilon_choices": 0,
+    "buffer_size": 0,
     "rewards": 0,
     "eroded_cells": 0,
     "landing_height": 0,
@@ -86,10 +88,10 @@ log_names_to_data = {
 action_headers = [f"a_{i}_count" for i in range(config.action_space_size)]
 action_selection_counts = np.zeros(config.action_space_size, dtype=int)
 
-main_logger = run.csv("training_metrics.csv", list(log_names_to_data.keys()))
-decisions_logger = run.csv("agent_decisions.csv", action_headers)
+main_logger = run.csv("training_metrics.csv", list(log_names_to_data.keys()), config.log_every)
+decisions_logger = run.csv("agent_decisions.csv", action_headers, config.log_every)
 
-log_counter = Counter(config.log_every)
+# log_counter = Counter(config.log_every)
 
 interval_timer = Timer()
 interval_timer.start_timer()
@@ -125,7 +127,7 @@ while True:
     watcher.check_should_watch_episodes()
     
     if log_names_to_data["episodes"] >= config.post_training_threshold :
-        # watcher.should_watch = True
+        watcher.should_watch = True
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
 
@@ -147,9 +149,11 @@ while True:
             best_index = best_actions[i]
             action_indexes.append(best_index)
             action_selection_counts[best_index] += 1
+            log_names_to_data["greedy_choices"] += 1
         else :
             action_indexes.append(greedy)
             action_selection_counts[greedy] += 1
+            log_names_to_data["epsilon_choices"] += 1
 
 
     action_enums = []
@@ -198,10 +202,13 @@ while True:
                 log_names_to_data["loss"]= model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
                 back_propagation_perf_timer.restart_timer()
 
-            if log_counter.increase_counter() :
+            # if log_counter.increase_counter() :
+            if main_logger.counter.increase_counter() :
 
                 log_names_to_data["total_time"] += interval_timer.restart_timer()
-                
+
+                log_names_to_data["buffer_size"] = buffer.size()
+
                 clear_counts = games.getAllClearCounts()
 
                 log_names_to_data["single_clears"] = clear_counts[0]
@@ -215,8 +222,8 @@ while True:
 
                 main_logger.log(log_data=list(log_names_to_data.values()))
                 
-                if SHOULD_TRAIN == False :
-                    post_training_log_counter += 1
+                # if SHOULD_TRAIN == False :
+                #     post_training_log_counter += 1
 
         if step_i.lost :
             games_to_reset.append(i)
@@ -273,7 +280,7 @@ while True:
 
         perf_measure_counter = 0
 
-    if post_training_log_counter >= post_training_log_max :
-        sys.exit()
-        break
+    # if post_training_log_counter >= post_training_log_max :
+    #     sys.exit()
+    #     break
 
