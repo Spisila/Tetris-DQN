@@ -24,6 +24,7 @@ MultiGame::MultiGame(size_t parallel_game_count)
 
   unsigned int num_cores = std::thread::hardware_concurrency();
   size_t active_threads = std::min(static_cast<size_t>(num_cores), GAME_AMOUNT);
+  // TODO: Fix completely unnecessary division into spans, every core should only get a single game
   size_t segment_size = GAME_AMOUNT / num_cores;
 
   std::span<RLEnv> game_view{games};
@@ -48,8 +49,8 @@ MultiGame::MultiGame(size_t parallel_game_count)
 MultiGame::~MultiGame()
 {
 
-  barrier.arrive_and_wait();
   running = false;
+  barrier.arrive_and_wait();
 
   for (auto &worker : game_workers)
   {
@@ -86,6 +87,7 @@ std::vector<RLEnv> MultiGame::createGames(size_t count)
 
 void MultiGame::threadLoop(size_t thread_segment_index)
 {
+  auto thread_segment = segments[thread_segment_index];
 
   while (running)
   {
@@ -96,9 +98,6 @@ void MultiGame::threadLoop(size_t thread_segment_index)
       break;
     }
 
-    // TODO: Move this outside the loop maybe?
-    auto thread_segment = segments[thread_segment_index];
-
     for (auto &game : thread_segment)
     {
       game.step();
@@ -108,6 +107,7 @@ void MultiGame::threadLoop(size_t thread_segment_index)
   }
 }
 
+// TODO: Change from vector to array
 std::vector<StepData> MultiGame::stepAll(std::vector<PreciseActions> _actions)
 {
 

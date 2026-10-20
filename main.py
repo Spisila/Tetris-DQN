@@ -15,8 +15,8 @@ from python.episode_logger import Run
 from python.episode_watcher import EpisodeWatcher
 from python.epsilon_greedy import EpsilonGreedy
 
-from python.counter import Counter
 from python.timer import Timer
+from python.counter import Counter
 
 from dataclasses import asdict
 from python.config import from_cli
@@ -91,36 +91,19 @@ action_selection_counts = np.zeros(config.action_space_size, dtype=int)
 main_logger = run.csv("training_metrics.csv", list(log_names_to_data.keys()), config.log_every)
 decisions_logger = run.csv("agent_decisions.csv", action_headers, config.log_every)
 
-# log_counter = Counter(config.log_every)
-
 interval_timer = Timer()
 interval_timer.start_timer()
 
-# Performance timers
-
-full_loop_perf_timer = Timer()
-
-look_head_perf_timer = Timer()
-step_all_perf_timer = Timer()
-step_processing_perf_timer = Timer()
-back_propagation_perf_timer = Timer()
-buffer_batching_perf_timer = Timer()
-
-perf_measure_counter = 0
-perf_measure_max = 500
-perf_measurments_taken = 0
-
-post_training_log_counter = 0
-post_training_log_max = 500
+post_training_counter = Counter(config.post_training_log_max)
 
 games.resetAll()
 state = np.array(games.getStates())
 
 print("Before loop")
 
-while True:
+is_running = True
 
-    full_loop_perf_timer.start_timer()
+while is_running:
 
     model.check_if_should_set_new_target(policy_net=model, target_net=target_model)
     
@@ -131,13 +114,10 @@ while True:
         epsilon_greedy.epsilon = 0
         SHOULD_TRAIN = False
 
-    look_head_perf_timer.start_timer()
-
     look_ahead = games.lookAheadAll()
     batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
     with torch.inference_mode():
         best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  #Takes the best action from each look ahead
-    look_head_perf_timer.restart_timer()
 
     action_indexes = []
 
@@ -161,9 +141,7 @@ while True:
     for i in range(len(action_indexes)) :
         action_enums.append(Tetris_AGENT.PreciseActions(action_indexes[i]))
 
-    step_all_perf_timer.start_timer()
     step_data = games.stepAll(action_enums)
-    step_all_perf_timer.restart_timer()
 
     for s in state :
         log_names_to_data["eroded_cells"] += s[0]
@@ -179,7 +157,6 @@ while True:
 
     log_names_to_data["steps"] += len(step_data)
 
-    step_processing_perf_timer.start_timer()
     for i in range(len(step_data)) :
 
         step_i = step_data[i]
@@ -194,15 +171,10 @@ while True:
 
             if buffer.size() > config.train_start and SHOULD_TRAIN == True :
                 
-                buffer_batching_perf_timer.start_timer()
                 experience_samples = buffer.sample(config.batch_size)
-                buffer_batching_perf_timer.restart_timer()
                 
-                back_propagation_perf_timer.start_timer()
                 log_names_to_data["loss"]= model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
-                back_propagation_perf_timer.restart_timer()
 
-            # if log_counter.increase_counter() :
             if main_logger.counter.increase_counter() :
 
                 log_names_to_data["total_time"] += interval_timer.restart_timer()
@@ -221,16 +193,15 @@ while True:
                 decisions_logger.log(log_data=action_selection_counts)
 
                 main_logger.log(log_data=list(log_names_to_data.values()))
-                
-                # if SHOULD_TRAIN == False :
-                #     post_training_log_counter += 1
+
+                if SHOULD_TRAIN == False :
+                    if post_training_counter.increase_counter() :
+                        is_running = False
 
         if step_i.lost :
             games_to_reset.append(i)
 
             log_names_to_data["episodes"] += 1
-
-    step_processing_perf_timer.restart_timer()
 
     for i in range(len(state)) :
         buffer.push(
@@ -248,39 +219,5 @@ while True:
 
     epsilon_greedy.epsilon = np.interp(log_names_to_data["episodes"], [0, config.post_training_threshold], [1, config.epsilon_min])
 
-    full_loop_perf_timer.restart_timer()
 
-    perf_measure_counter += 1
-    
-    if perf_measure_counter >= perf_measure_max :
-        average_full_loop_time = full_loop_perf_timer.get_total() / perf_measure_max
-    
-        average_look_ahead_time = look_head_perf_timer.get_total() / perf_measure_max
-        average_step_all_time = step_all_perf_timer.get_total() / perf_measure_max
-        average_step_processing_time = step_processing_perf_timer.get_total() / perf_measure_max
-        average_buffer_batching_time = buffer_batching_perf_timer.get_total() / perf_measure_max
-        average_back_propagation_time = back_propagation_perf_timer.get_total() / perf_measure_max
-
-        full_loop_perf_timer.reset_total()
-        
-        look_head_perf_timer.reset_total()
-        step_all_perf_timer.reset_total()
-        step_processing_perf_timer.reset_total()
-        buffer_batching_perf_timer.reset_total()
-        back_propagation_perf_timer.reset_total()
-
-        perf_measurments_taken += 1
-        # print(f"\nMEASUREMENT = {perf_measurments_taken}\n")
-        # print(f"Average time to make a full loop = {average_full_loop_time}")
-        # print(f"Average time to look ahead = {average_look_ahead_time}")
-        # print(f"Average time to step all = {average_step_all_time}")
-        # print(f"Average time to process steps = {average_step_processing_time}")
-        # print(f"    Average time to sample replay buffer = {average_buffer_batching_time}")
-        # print(f"    Average time to do backpropagation = {average_back_propagation_time}")
-
-        perf_measure_counter = 0
-
-    # if post_training_log_counter >= post_training_log_max :
-    #     sys.exit()
-    #     break
-
+print("E")
