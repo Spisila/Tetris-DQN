@@ -21,15 +21,17 @@ class CSVLogger:
 
 
 class Run:
-    def __init__(self, configs, extra=None, base="logs/runs"):
+
+    def __init__(self, configs, extra=None, base="logs"):
         time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        file_name = f"{time_stamp}_{configs.tag}" if configs.tag else time_stamp
-        self.directory = os.path.join(base, file_name)
+        self.file_name = f"{time_stamp}_{configs.tag}" if configs.tag else time_stamp
+        self.directory = os.path.join(base, self.file_name)
+        self.log_count = 1
         os.makedirs(self.directory)
         self.save_configs(configs=configs, extra=extra or {} )
 
     def csv(self, name, header, log_every) :
-        return CSVLogger(os.path.join(self.directory, name), header, log_every)
+        return CSVLogger(os.path.join(self.directory, f"{self.log_count}_{name}"), header, log_every)
 
     def save_configs(self, configs, extra) :
         data = {**asdict(configs), **extra}

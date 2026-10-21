@@ -31,7 +31,7 @@ class Config:
   watch_training: bool = False
   watch_post_training: bool = True
   post_training_threshold: int = 10_000
-  post_training_log_max = 500
+  post_training_log_max = 250
   tag: str = ""
 
 def from_cli() -> Config:

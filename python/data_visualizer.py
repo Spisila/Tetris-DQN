@@ -4,10 +4,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-parent_directory = Path("logs/runs")
-file_name = "training_metrics.csv"
+# parent_directory = Path("logs")
+# file_name = "training_metrics.csv"
 
-csv_files = list(parent_directory.glob(f"**/{file_name}"))
+# csv_files = list(parent_directory.glob(f"**/{file_name}"))
+
+dir_path = Path("logs/2026-10-20_20-12-57")
+
+# Find only .csv files in the main folder
+csv_files = [item for item in dir_path.glob('*.csv') if item.is_file()]
 
 data_frames = []
 
@@ -32,9 +37,19 @@ if data_frames :
 
   plt.figure(figsize=(10,6))
 
+  combined["total_lines"] = \
+    combined["single_clears"] + \
+    combined["double_clears"] * 2 + \
+    combined["triple_clears"] * 3 + \
+    combined["tetris_clears"] * 4 
+
+  combined["lines_per_piece"] = combined["total_lines"].diff() / combined["pieces_placed"].diff()
+
+  combined["smooth_lines_per_piece"] = combined["lines_per_piece"].rolling(window=25, center=True).mean()
+
   sns.lineplot(data=combined, 
-               x="episode_interval", 
-               y="pieces_placed_interval", 
+               x="steps", 
+               y="smooth_lines_per_piece", 
                hue="Test"
               )
   
