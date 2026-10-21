@@ -6,9 +6,13 @@ namespace py = pybind11;
 
 #include <rl/multi_game.hpp>
 
-MultiGame::MultiGame(size_t parallel_game_count)
+MultiGame::MultiGame(
+    size_t parallel_game_count,
+    float survival_weight,
+    float quadratic_weight,
+    float loss_weigth)
     : barrier(getThreadCount()),
-      games(createGames(parallel_game_count)),
+      games(createGames(parallel_game_count, survival_weight, quadratic_weight, loss_weigth)),
       renderer(games[0].getGameEnv())
 {
 
@@ -67,7 +71,11 @@ std::size_t MultiGame::getThreadCount()
   return (cores == 0 ? 1 : cores) + 1;
 }
 
-std::vector<RLEnv> MultiGame::createGames(size_t count)
+std::vector<RLEnv> MultiGame::createGames(
+    size_t count,
+    float survival_weight,
+    float quadratic_weight,
+    float loss_weigth)
 {
   if (count == 0)
   {
@@ -79,7 +87,7 @@ std::vector<RLEnv> MultiGame::createGames(size_t count)
 
   for (size_t i = 0; i < count; ++i)
   {
-    envs.emplace_back(i);
+    envs.emplace_back(i, survival_weight, quadratic_weight, loss_weigth);
   }
 
   return envs;

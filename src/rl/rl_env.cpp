@@ -1,8 +1,11 @@
 #include <rl_env.hpp>
 #include <iostream>
 
-RLEnv::RLEnv(int _id) : game_env(_id)
+RLEnv::RLEnv(int _id, float _survival_weight, float _quadratic_weight, float _loss_weight) : game_env(_id)
 {
+  survival_weight = _survival_weight;
+  quadratic_weight = _quadratic_weight;
+  loss_weight = _loss_weight;
 }
 
 RLEnv::~RLEnv()
@@ -90,14 +93,14 @@ float RLEnv::delachiereStepReward()
 float RLEnv::quadraticStepReward()
 {
   int lines = getGameEnv().getLinesClearedLast();
-  return 1.0f + (lines * lines) * 10.0f;
+  return survival_weight + (lines * lines) * quadratic_weight;
 }
 
 StepData RLEnv::calculateReward()
 {
   if (getGameEnv().lost)
   {
-    StepData loss_step = {-20.f, true, true};
+    StepData loss_step = {loss_weight, true, true};
     return loss_step;
   }
 

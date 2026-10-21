@@ -36,12 +36,18 @@ private:
   bool running{false};
 
   static std::size_t getThreadCount();
-  static std::vector<RLEnv> createGames(size_t count);
+  static std::vector<RLEnv> createGames(size_t count,
+                                        float survival_weight,
+                                        float quadratic_weight,
+                                        float loss_weigth);
 
 public:
   std::vector<py::array_t<float>> states_cache;
 
-  explicit MultiGame(size_t parallel_game_count);
+  explicit MultiGame(size_t parallel_game_count,
+                     float survival_weight,
+                     float quadratic_weight,
+                     float loss_weigth);
   ~MultiGame();
 
   void threadLoop(size_t thread_segment_index);

@@ -8,6 +8,10 @@ class Config:
   num_games: int = 8
   action_space_size: int = 40
   input_dimensions: int = 67
+  
+  survival_weight = float(1.5)
+  quadratic_weight = float(10)
+  loss_weight = float(-30)
 
   # rede
   num_neurons: int = 128

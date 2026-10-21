@@ -71,7 +71,11 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
     print("Started")
     print("Initialization")
 
-    games = Tetris_AGENT.MultiGame(config.num_games)
+    games = Tetris_AGENT.MultiGame(
+        config.num_games,
+        config.survival_weight,
+        config.quadratic_weight,
+        config.loss_weight)
 
     model        = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
     target_model = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)

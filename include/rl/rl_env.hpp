@@ -27,8 +27,12 @@ class RLEnv
 private:
   Game game_env;
 
+  float survival_weight = 1.0f;
+  float quadratic_weight = 10.0f;
+  float loss_weight = -20.0f;
+
 public:
-  RLEnv(int _id);
+  RLEnv(int _id, float survival_weight, float quadratic_weight, float loss_weight);
   ~RLEnv();
 
   Game &getGameEnv();
