@@ -1,5 +1,6 @@
 
 import random
+import numpy as np 
 
 class EpsilonGreedy() :
 
@@ -13,6 +14,9 @@ class EpsilonGreedy() :
         
         if self.epsilon > self.min : 
             self.epsilon -= custom_amount 
+
+    def linear_epsilon_reduction(self, value, max) :
+        self.epsilon = np.interp(value, [0, max], [1, self.min])
 
     def greedy(self) :
         if random.random() > self.epsilon :

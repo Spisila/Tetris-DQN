@@ -18,7 +18,6 @@ from python.epsilon_greedy import EpsilonGreedy
 from python.timer import Timer
 from python.counter import Counter
 
-from dataclasses import asdict
 from python.config import from_cli
 
 agent_path = os.path.abspath("./Release")
@@ -32,6 +31,40 @@ config = from_cli()
 
 def format_float(f, digits=3) :
     return f"{f:.{digits}f}"
+
+def look_ahead(games, model) :
+    look_ahead = games.lookAheadAll()
+    batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
+    with torch.inference_mode():
+        best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  #Takes the best action from each look ahead
+    return best_actions
+
+def epsilon_or_greedy_action(epsilon_greedy, log_names_to_data, best_actions):
+
+    action_indexes = []
+
+    for i in range(config.num_games) :
+        greedy = epsilon_greedy.greedy()
+            
+        if greedy == -1 :
+            best_index = best_actions[i]
+            action_indexes.append(best_index)
+                # action_selection_counts[best_index] += 1
+            log_names_to_data["greedy_choices"] += 1
+        else :
+            action_indexes.append(greedy)
+                # action_selection_counts[greedy] += 1
+            log_names_to_data["epsilon_choices"] += 1
+
+    return action_indexes
+
+def convert_action_indexes_to_action_enums(action_indexes):
+    action_enums = []
+
+    for i in range(len(action_indexes)) :
+        action_enums.append(Tetris_AGENT.PreciseActions(action_indexes[i]))
+    return action_enums
+
 
 def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False) :
 
@@ -95,7 +128,6 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
     post_training_counter = Counter(config.post_training_log_max)
 
     watcher = EpisodeWatcher(games=games, watch=config.watch_training)
-    
     watcher.should_watch = watch
 
     games.resetAll()
@@ -116,34 +148,14 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
             epsilon_greedy.epsilon = 0
             SHOULD_TRAIN = False
 
-        look_ahead = games.lookAheadAll()
-        batch = torch.from_numpy(np.asarray(look_ahead, dtype=np.float32))   # (8, 40, 67)
-        with torch.inference_mode():
-            best_actions = model(batch).squeeze(-1).argmax(dim=1).tolist()  #Takes the best action from each look ahead
+        best_actions = look_ahead(games=games, model=model)
 
-        action_indexes = []
-
-        for i in range(config.num_games) :
-
-            greedy = epsilon_greedy.greedy()
-            
-            if greedy == -1 :
-                best_index = best_actions[i]
-                action_indexes.append(best_index)
-                # action_selection_counts[best_index] += 1
-                log_names_to_data["greedy_choices"] += 1
-            else :
-                action_indexes.append(greedy)
-                # action_selection_counts[greedy] += 1
-                log_names_to_data["epsilon_choices"] += 1
-
-
-        action_enums = []
-
-        for i in range(len(action_indexes)) :
-            action_enums.append(Tetris_AGENT.PreciseActions(action_indexes[i]))
+        action_indexes = epsilon_or_greedy_action(epsilon_greedy, log_names_to_data, best_actions)
+        action_enums = convert_action_indexes_to_action_enums(action_indexes)
 
         step_data = games.stepAll(action_enums)
+
+        log_names_to_data["steps"] += len(step_data)
 
         for s in state :
             log_names_to_data["eroded_cells"] += s[0]
@@ -156,8 +168,6 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
         next_state = games.getStates()
 
         games_to_reset = []
-
-        log_names_to_data["steps"] += len(step_data)
 
         for i in range(len(step_data)) :
 
@@ -172,9 +182,7 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
                 log_names_to_data["pieces_placed"] += 1
 
                 if buffer.size() > config.train_start and SHOULD_TRAIN == True :
-                    
                     experience_samples = buffer.sample(batch_size)
-                    
                     log_names_to_data["loss"]= model.back_propagation(experience_samples, target_model, criterion, optimizer, scheduler, config)
 
                 if main_logger.counter.increase_counter() :
@@ -202,7 +210,6 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
 
             if step_i.lost :
                 games_to_reset.append(i)
-
                 log_names_to_data["episodes"] += 1
 
         for i in range(len(state)) :
@@ -216,10 +223,11 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
 
         state = next_state
 
+        epsilon_greedy.reduce_epsilon(config.epsilon_reduction)
+
         for game in games_to_reset :
             games.resetThis(game)
 
-        epsilon_greedy.epsilon = np.interp(log_names_to_data["steps"], [0, train_until], [1, config.epsilon_min])
 
 
 print("End")
