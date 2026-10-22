@@ -208,7 +208,6 @@ int Game::pieceWasSet()
     hold_used = false;
     piece_queue.updatePieceQueue();
 
-
     return lines;
 }
 
@@ -258,8 +257,8 @@ void Game::gameLost()
     lost = true;
     game_board.clearBoard();
     piece_queue.generatePieceQueue();
-    piece_queue.updatePieceQueue();
     game_board.setPiece(static_cast<PieceType>(getPieceQueue().getPieceQueue().at(0)));
+    piece_queue.updatePieceQueue();
     game_board.setTetrominoCellsStates(CellState::ACTIVE, game_board.getBoardTetromino().getAllPositions());
 }
 

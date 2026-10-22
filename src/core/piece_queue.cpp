@@ -31,7 +31,7 @@ const std::array<int, queue_size> PieceQueue::getPieceQueue() const
 int PieceQueue::getQueueIndex() const {
     return queue_index;
 }
-
+// TODO: Variable queue size
 void PieceQueue::generatePieceQueue()
 {
     queue_index = 0;
