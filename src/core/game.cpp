@@ -11,7 +11,8 @@
 Implement wall kicks
 */
 
-Game::Game(int _id)
+Game::Game(int _id, int seed) 
+: piece_queue(seed) 
 {
 
     id = _id;

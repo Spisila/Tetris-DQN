@@ -15,7 +15,7 @@
 int main()
 {
 
-  Game main_game{1};
+  Game main_game{1, 22};
   GameRenderer renderer{main_game};
 
   Board &board = main_game.getBoard();

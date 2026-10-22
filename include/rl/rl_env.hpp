@@ -32,7 +32,7 @@ private:
   float loss_weight = -20.0f;
 
 public:
-  RLEnv(int _id, float survival_weight, float quadratic_weight, float loss_weight);
+  RLEnv(int _id, float survival_weight, float quadratic_weight, float loss_weight, int seed);
   ~RLEnv();
 
   Game &getGameEnv();

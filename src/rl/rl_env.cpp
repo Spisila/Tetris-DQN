@@ -1,7 +1,8 @@
 #include <rl_env.hpp>
 #include <iostream>
 
-RLEnv::RLEnv(int _id, float _survival_weight, float _quadratic_weight, float _loss_weight) : game_env(_id)
+RLEnv::RLEnv(int _id, float _survival_weight, float _quadratic_weight, float _loss_weight, int seed) 
+: game_env(_id, seed)
 {
   survival_weight = _survival_weight;
   quadratic_weight = _quadratic_weight;

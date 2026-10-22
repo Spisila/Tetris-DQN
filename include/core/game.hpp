@@ -24,7 +24,7 @@ private:
   int gravity_ticks = 30;
 
   Board game_board{};
-  PieceQueue piece_queue{};
+  PieceQueue piece_queue;
 
   int lines_cleared = 0;
   int lines_cleared_last = 0;
@@ -55,7 +55,7 @@ public:
   int hold_piece_index = -1;
   bool hold_used = false;
 
-  Game(int _id);
+  Game(int _id, int seed);
 
   // ---------------
 

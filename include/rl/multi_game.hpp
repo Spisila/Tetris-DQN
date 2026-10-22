@@ -39,7 +39,8 @@ private:
   static std::vector<RLEnv> createGames(size_t count,
                                         float survival_weight,
                                         float quadratic_weight,
-                                        float loss_weigth);
+                                        float loss_weigth,
+                                        int seed);
 
 public:
   std::vector<py::array_t<float>> states_cache;
@@ -47,7 +48,8 @@ public:
   explicit MultiGame(size_t parallel_game_count,
                      float survival_weight,
                      float quadratic_weight,
-                     float loss_weigth);
+                     float loss_weigth,
+                     int seed);
   ~MultiGame();
 
   void threadLoop(size_t thread_segment_index);

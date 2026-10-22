@@ -86,7 +86,7 @@ PYBIND11_MODULE(Tetris_AGENT, m)
         .def_readwrite("lost", &StepData::lost);
 
     py::class_<MultiGame>(m, "MultiGame")
-        .def(py::init<int, float, float, float>())
+        .def(py::init<int, float, float, float, int>())
 
         .def("initGraphics", &MultiGame::initGraphics, "Initializes window")
         .def("render", &MultiGame::render, "Renders the board")

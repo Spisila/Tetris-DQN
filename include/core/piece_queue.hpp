@@ -20,8 +20,10 @@ private:
 
   std::mt19937 gen;
 
+  int seed;
+
 public:
-  PieceQueue();
+  PieceQueue(int seed) : gen(1) {};
   ~PieceQueue();
 
   size_t getQueueSize() const;

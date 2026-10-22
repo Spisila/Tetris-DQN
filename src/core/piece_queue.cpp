@@ -2,10 +2,6 @@
 #include "piece_queue.hpp"
 #include <types.hpp>
 
-PieceQueue::PieceQueue()
-{
-    gen.seed(std::random_device{}());
-}
 
 PieceQueue::~PieceQueue()
 {
@@ -15,6 +11,8 @@ size_t PieceQueue::getQueueSize() const
 {
     return queue_size;
 }
+
+// ! MULTIGAME RECIEVES SEED, PASSES IT TO EACH RLENV, PASSES IT TO EACH GAME, PASSES IT TO EACH QUEUE
 
 const std::array<int, queue_size> PieceQueue::getPieceQueue() const
 {
@@ -28,7 +26,8 @@ const std::array<int, queue_size> PieceQueue::getPieceQueue() const
     return int_queue;
 }
 
-int PieceQueue::getQueueIndex() const {
+int PieceQueue::getQueueIndex() const
+{
     return queue_index;
 }
 // TODO: Variable queue size

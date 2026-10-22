@@ -93,7 +93,8 @@ def train(
         config.num_games,
         survival_weight,
         quadratic_weight,
-        loss_weight)
+        loss_weight,
+        seed)
 
     model        = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
     target_model = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)

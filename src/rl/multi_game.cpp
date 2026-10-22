@@ -10,9 +10,10 @@ MultiGame::MultiGame(
     size_t parallel_game_count,
     float survival_weight,
     float quadratic_weight,
-    float loss_weigth)
+    float loss_weigth,
+    int seed)
     : barrier(getThreadCount()),
-      games(createGames(parallel_game_count, survival_weight, quadratic_weight, loss_weigth)),
+      games(createGames(parallel_game_count, survival_weight, quadratic_weight, loss_weigth, seed)),
       renderer(games[0].getGameEnv())
 {
 
@@ -42,7 +43,6 @@ MultiGame::MultiGame(
     }
     else
     {
-
       segments.push_back(game_view.subspan(i * segment_size, segment_size));
     }
 
@@ -75,11 +75,12 @@ std::vector<RLEnv> MultiGame::createGames(
     size_t count,
     float survival_weight,
     float quadratic_weight,
-    float loss_weigth)
+    float loss_weigth,
+    int seed)
 {
   if (count == 0)
   {
-    throw std::invalid_argument("parallel_game_count deve ser maior que 0.");
+    throw std::invalid_argument("parallel_game_count must be greater than 0");
   }
 
   std::vector<RLEnv> envs;
@@ -87,7 +88,7 @@ std::vector<RLEnv> MultiGame::createGames(
 
   for (size_t i = 0; i < count; ++i)
   {
-    envs.emplace_back(i, survival_weight, quadratic_weight, loss_weigth);
+    envs.emplace_back(i, survival_weight, quadratic_weight, loss_weigth, seed + i);
   }
 
   return envs;
