@@ -550,26 +550,14 @@ int Board::clearLines()
     // Loop through all lines and count filled cells
     for (int line = 0; line < BOARD_SIZE_Y; line++)
     {
-        int filled_count = 0;
-
-        // Check if line full
-        for (int x = 0; x < BOARD_SIZE_X; x++)
-        {
-
-            if (isCellFilled(x, line))
-            {
-                filled_count++;
-            }
-        }
 
         // If line is full, clear it and move everything above down
-
-        if (filled_count == BOARD_SIZE_X)
+        if (checkIfLineFilled(line))
         {
             cleared_lines++;
 
             int cleared_line = line;
-            for (int line_above = line - 1; line_above > 0; line_above--)
+            for (int line_above = line - 1; line_above >= 0; line_above--)
             {
                 for (int cell = 0; cell < BOARD_SIZE_X; cell++)
                 {
@@ -581,9 +569,40 @@ int Board::clearLines()
                 }
                 cleared_line = line_above;
             }
+
+            setLineState(CellState::EMPTY, 0);
         }
     }
     return cleared_lines;
+}
+
+bool Board::checkIfLineFilled(int line)
+{
+    int filled_count = 0;
+
+    for (int x = 0; x < BOARD_SIZE_X; x++)
+    {
+
+        if (isCellFilled(x, line))
+        {
+            filled_count++;
+        }
+    }
+
+    if (filled_count == BOARD_SIZE_X)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void Board::setLineState(CellState new_state, int line)
+{
+    for (int cell = 0; cell < BOARD_SIZE_X; cell++)
+    {
+        board[cell][line] = new_state;
+    }
 }
 
 void Board::clearBoard()

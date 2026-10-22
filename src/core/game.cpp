@@ -145,6 +145,7 @@ int Game::getClearedLines()
     return lines_cleared;
 }
 
+// TODO: Refactor
 int Game::pieceWasSet()
 {
 

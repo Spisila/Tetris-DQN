@@ -48,7 +48,6 @@ int main()
     else if (IsKeyPressed(KEY_X))
     {
       board.rotateTetromino(Rotation::CLOCKWISE);
-      std::cout << board.getBoardTetromino().getCurrentRotation() << std::endl;
     }
     else if (IsKeyPressed(KEY_A))
     {

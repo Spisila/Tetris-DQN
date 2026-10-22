@@ -43,12 +43,11 @@ public:
 
   float calculateLandingHeight(const std::array<Position, 4> &piece_positions) const;
   int calculateErodedPieceCells(const std::array<Position, 4> &piece_positions) const;
-  
-  
+
   const std::array<int, 4> getBoardState() const;
-  
+
   int getAggregateHeight() const;
-  
+
   Tetromino &getBoardTetromino();
   const Tetromino &getBoardTetromino() const;
 
@@ -78,7 +77,9 @@ public:
   void tickGravity();
   int clearLines();
 
+  bool checkIfLineFilled(int line);
+
+  void setLineState(CellState new_state, int line);
+
   void clearBoard();
 };
-
-
