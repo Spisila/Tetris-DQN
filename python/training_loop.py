@@ -66,16 +66,26 @@ def convert_action_indexes_to_action_enums(action_indexes):
     return action_enums
 
 
-def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False) :
+def train(run_, 
+          survival_weight,
+          quadratic_weight,
+          loss_weight,
+          lr_start, 
+          batch_size, 
+          buffer_capacity, 
+          train_until,
+          epsilon_reduction, 
+          epsilon_min,
+          watch=False) :
 
     print("Started")
     print("Initialization")
 
     games = Tetris_AGENT.MultiGame(
         config.num_games,
-        config.survival_weight,
-        config.quadratic_weight,
-        config.loss_weight)
+        survival_weight,
+        quadratic_weight,
+        loss_weight)
 
     model        = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
     target_model = DQN(input_dim=config.input_dimensions, output_dim=1, target_max=config.set_target_in_actions, number_of_neurons=config.num_neurons)
@@ -88,7 +98,7 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
     criterion    = nn.SmoothL1Loss()
 
     buffer         = ReplayBuffer(capacity=buffer_capacity)
-    epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=config.epsilon_min, reduction_amount=config.epsilon_reduction) 
+    epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=epsilon_min, reduction_amount=epsilon_reduction) 
 
     # LOGGER
 
@@ -148,7 +158,7 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
         watcher.check_should_watch_episodes()
 
         if log_names_to_data["steps"] >= train_until :
-            watcher.should_watch = True
+            watcher.should_watch = False
             epsilon_greedy.epsilon = 0
             SHOULD_TRAIN = False
 
@@ -208,9 +218,9 @@ def train(run_, lr_start, batch_size, buffer_capacity, train_until, watch=False)
 
                     main_logger.log(log_data=list(log_names_to_data.values()))
 
-                    # if SHOULD_TRAIN == False :
-                    #     if post_training_counter.increase_counter() :
-                    #         is_running = False
+                    if SHOULD_TRAIN == False :
+                        if post_training_counter.increase_counter() :
+                            is_running = False
 
             if step_i.lost :
                 games_to_reset.append(i)
