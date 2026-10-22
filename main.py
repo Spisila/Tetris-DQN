@@ -13,6 +13,8 @@ run = Run(config, {})
 
 training_folder = run.file_name
 
+seeds = [22, 99, 150]
+seed_index = 0
 
 def objective(trial):
 
@@ -30,7 +32,10 @@ def objective(trial):
     buffer_capacity = trial.suggest_categorical("buffer_capacity", [500_000, 1_000_000])
     train_until = trial.suggest_categorical("train_until", [500_000, 750_000, 1_000_000])
 
+    current_seed = seeds[seed_index]
+
     train(
+        seed=current_seed,
         run_=run,
         lr_start=lr, 
         batch_size=batch_size, 
@@ -57,13 +62,20 @@ def objective(trial):
     
 
 # Inicia o estudo do Optuna
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=100)
+# study = optuna.create_study(direction="maximize")
+# study.optimize(objective, n_trials=100)
 
-# train(
-#     run_=run,
-#     lr_start=0.001, 
-#     batch_size=256, 
-#     buffer_capacity=1_000_000,
-#     train_until=500_000,
-#     )
+train(
+    seed=22,
+    run_=run,
+    lr_start=0.00040139607600709584, 
+    batch_size=128, 
+    buffer_capacity=500000,
+    train_until=1000000,
+    survival_weight=0.8685837453230001,
+    quadratic_weight=6.875885304341992,
+    loss_weight=-70.99844997579854,
+    epsilon_reduction = 1.5381606346160456e-05,
+    epsilon_min = 0.022958112603046425,
+    watch=True
+    )

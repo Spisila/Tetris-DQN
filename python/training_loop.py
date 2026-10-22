@@ -66,7 +66,9 @@ def convert_action_indexes_to_action_enums(action_indexes):
     return action_enums
 
 
-def train(run_, 
+def train(
+          seed,
+          run_, 
           survival_weight,
           quadratic_weight,
           loss_weight,
@@ -80,6 +82,12 @@ def train(run_,
 
     print("Started")
     print("Initialization")
+
+    np.random.seed(seed)
+    
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
     games = Tetris_AGENT.MultiGame(
         config.num_games,
@@ -97,8 +105,8 @@ def train(run_,
     )
     criterion    = nn.SmoothL1Loss()
 
-    buffer         = ReplayBuffer(capacity=buffer_capacity)
-    epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=epsilon_min, reduction_amount=epsilon_reduction) 
+    buffer         = ReplayBuffer(capacity=buffer_capacity, seed=seed)
+    epsilon_greedy = EpsilonGreedy(output_size=config.action_space_size, epsilon_min=epsilon_min, reduction_amount=epsilon_reduction, seed=seed) 
 
     # LOGGER
 

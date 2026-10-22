@@ -1,11 +1,10 @@
-import random
-from collections import deque
-
 import numpy as np
 import torch
 
 class ReplayBuffer:
-    def __init__(self, capacity=50_000, state_dim=67):
+    def __init__(self, capacity=50_000, state_dim=67, seed=22):
+        np.random.seed(seed)
+        
         self.capacity, self.n, self.i = capacity, 0, 0
         self.s_dim = state_dim
         self.states      = np.zeros((capacity, state_dim), dtype=np.float32)
