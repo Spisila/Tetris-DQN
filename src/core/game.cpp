@@ -195,6 +195,9 @@ int Game::pieceWasSet()
     last_landing_height = game_board.calculateLandingHeight(tetromino_positions);
     last_eroded_piece_cells = game_board.calculateErodedPieceCells(tetromino_positions);
 
+    int lines = game_board.clearLines();
+    lines_cleared_last = lines;
+
     if (!game_board.setPiece(next_piece_in_queue))
     {
         gameLost();
@@ -205,8 +208,6 @@ int Game::pieceWasSet()
     hold_used = false;
     piece_queue.updatePieceQueue();
 
-    int lines = game_board.clearLines();
-    lines_cleared_last = lines;
 
     return lines;
 }
