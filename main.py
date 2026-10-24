@@ -13,69 +13,95 @@ run = Run(config, {})
 
 training_folder = run.file_name
 
-seeds = [22, 99, 150]
+seeds = [45, 99, 150]
 seed_index = 0
 
 def objective(trial):
 
     # Parameters
     survival_weight = trial.suggest_float("survival_weight", 0.75, 3, log=True)
-    quadratic_weight = trial.suggest_float("quadratic_weight", 5, 20, log=True)
-    loss_weight = trial.suggest_float("loss_weight", 20, 100, log=True)
+    quadratic_weight = trial.suggest_float("quadratic_weight", 10, 15, log=True)
+    loss_weight = trial.suggest_float("loss_weight", 20, 45, log=True)
     
     
     lr = trial.suggest_float("lr_start", 1e-4, 1e-3, log=True)
     epsilon_reduciton = trial.suggest_float("epsilon_reduciton", 0.000005, 0.00005, log=True)
     epsilon_min = trial.suggest_float("epsilon_min", 0.01, 0.05, log=True)
     
-    batch_size = trial.suggest_categorical("batch_size", [128, 256])
-    buffer_capacity = trial.suggest_categorical("buffer_capacity", [500_000, 1_000_000])
-    train_until = trial.suggest_categorical("train_until", [500_000, 750_000, 1_000_000])
+    # batch_size = trial.suggest_categorical("batch_size", [128, 256])
+    batch_size = 128
+    # buffer_capacity = trial.suggest_categorical("buffer_capacity", [250_000, 500_000])
+    buffer_capacity = 250_000
+    # train_until = trial.suggest_categorical("train_until", [150_000, 250_000, 500_000])
+    train_until = 500_000
 
-    current_seed = seeds[seed_index]
+    trials_in_seeds = []
 
-    train(
-        seed=current_seed,
-        run_=run,
-        lr_start=lr, 
-        batch_size=batch_size, 
-        buffer_capacity=buffer_capacity,
-        train_until=train_until,
-        survival_weight=survival_weight,
-        quadratic_weight=quadratic_weight,
-        loss_weight=-loss_weight,
-        epsilon_reduction = epsilon_reduciton,
-        epsilon_min = epsilon_min
-        )
-    
+    for i in range(len(seeds)) :
+        current_seed = seeds[i]
+
+        train(
+            seed=current_seed,
+            run_=run,
+            lr_start=lr, 
+            batch_size=batch_size, 
+            buffer_capacity=buffer_capacity,
+            train_until=train_until,
+            survival_weight=survival_weight,
+            quadratic_weight=quadratic_weight,
+            loss_weight=-loss_weight,
+            epsilon_reduction = epsilon_reduciton,
+            epsilon_min = epsilon_min
+            )
+        
+        
+
+        trials_in_seeds.append(run.log_count)
+        run.log_count += 1
+
+
     run_dir = f"logs/{training_folder}" 
-    csv_path = os.path.join(run_dir, f"{run.log_count}_training_metrics.csv")
+
+    # csv_path = os.path.join(run_dir, f"{run.log_count}_training_metrics.csv")
     
-    run.log_count += 1
+    trials = [
+    os.path.join(run_dir, f"{num}_training_metrics.csv") for num in trials_in_seeds
+    ]
+
+    trial_scores = [ ]
+
+    for trial in trials :
+        df_t = pd.read_csv(trial)
+        trial_scores.append(df_t["rewards"].tail(config.post_training_log_max).mean()) 
 
     # Success metric
-    df = pd.read_csv(csv_path)
-    final_score = df["eroded_cells"].tail(config.post_training_log_max).mean() 
-        
+    
+    # df = pd.concat((pd.read_csv(f) for f in trials), ignore_index=True)
+    # final_score = df["rewards"].tail(config.post_training_log_max).mean() 
+
+    final_score = sum(trial_scores) / len(seeds)
+
+    trials_in_seeds.clear()
+    
     return final_score
     
     
 
-# Inicia o estudo do Optuna
-# study = optuna.create_study(direction="maximize")
-# study.optimize(objective, n_trials=100)
 
-train(
-    seed=22,
-    run_=run,
-    lr_start=0.00040139607600709584, 
-    batch_size=128, 
-    buffer_capacity=500000,
-    train_until=1000000,
-    survival_weight=0.8685837453230001,
-    quadratic_weight=6.875885304341992,
-    loss_weight=-70.99844997579854,
-    epsilon_reduction = 1.5381606346160456e-05,
-    epsilon_min = 0.022958112603046425,
-    watch=True
-    )
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=20)
+
+# train(
+#     seed=22,
+#     run_=run,
+#     lr_start=0.00040139607600709584, 
+#     batch_size=128, 
+#     buffer_capacity=500000,
+#     train_until=1000000,
+#     survival_weight=0.8685837453230001,
+#     quadratic_weight=6.875885304341992,
+#     loss_weight=-70.99844997579854,
+#     epsilon_reduction = 1.5381606346160456e-05,
+#     epsilon_min = 0.022958112603046425,
+#     watch=True
+#     )

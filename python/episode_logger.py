@@ -26,7 +26,7 @@ class Run:
         time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.file_name = f"{time_stamp}_{configs.tag}" if configs.tag else time_stamp
         self.directory = os.path.join(base, self.file_name)
-        self.log_count = 1
+        self.log_count = 0
         os.makedirs(self.directory)
         self.save_configs(configs=configs, extra=extra or {} )
 
