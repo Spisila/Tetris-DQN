@@ -74,11 +74,6 @@ def objective(trial):
         df_t = pd.read_csv(trial)
         trial_scores.append(df_t["rewards"].tail(config.post_training_log_max).mean()) 
 
-    # Success metric
-    
-    # df = pd.concat((pd.read_csv(f) for f in trials), ignore_index=True)
-    # final_score = df["rewards"].tail(config.post_training_log_max).mean() 
-
     final_score = sum(trial_scores) / len(seeds)
 
     trials_in_seeds.clear()
@@ -88,20 +83,20 @@ def objective(trial):
     
 
 
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=20)
+# study = optuna.create_study(direction="maximize")
+# study.optimize(objective, n_trials=20)
 
-# train(
-#     seed=22,
-#     run_=run,
-#     lr_start=0.00040139607600709584, 
-#     batch_size=128, 
-#     buffer_capacity=500000,
-#     train_until=1000000,
-#     survival_weight=0.8685837453230001,
-#     quadratic_weight=6.875885304341992,
-#     loss_weight=-70.99844997579854,
-#     epsilon_reduction = 1.5381606346160456e-05,
-#     epsilon_min = 0.022958112603046425,
-#     watch=True
-#     )
+train(
+    seed=22,
+    run_=run,
+    lr_start=0.00005, 
+    batch_size=128, 
+    buffer_capacity=250_000,
+    train_until=500_000,
+    survival_weight=0.8685837453230001,
+    quadratic_weight=12,
+    loss_weight=-30,
+    epsilon_reduction = 0.000005,
+    epsilon_min = 0.022958112603046425,
+    watch=True
+    )

@@ -167,7 +167,8 @@ def train(
         watcher.check_should_watch_episodes()
 
         if log_names_to_data["steps"] >= train_until :
-            watcher.should_watch = False
+            if watch == False :
+                watcher.should_watch = False
             epsilon_greedy.epsilon = 0
             SHOULD_TRAIN = False
 

@@ -178,60 +178,26 @@ void GameRenderer::drawCell(int x, int y, Color base_color, Color shadow, Color 
 
   drawTrapezoidTop(out_cell_top_left, out_cell_bottom_right, in_cell_top_left, in_cell_bottom_right, shadow);
   drawTrapezoidBottom(out_cell_top_left, out_cell_bottom_right, in_cell_top_left, in_cell_bottom_right, highlight);
-  // drawTrapezoidRight(out_cell_top_left, out_cell_bottom_right, in_cell_top_left, in_cell_bottom_right, BOARD_SHADOW);
-  // drawTrapezoidLeft(out_cell_top_left, out_cell_bottom_right, in_cell_top_left, in_cell_bottom_right, BOARD_SHADOW);
 }
 
 void GameRenderer::drawTrapezoidTop(Vector2 out_top_left, Vector2 out_bottom_right, Vector2 in_top_left, Vector2 in_bottom_right, Color color)
 {
-  // Define os 4 pontos do trapézio
   Vector2 pA = {out_top_left.x, out_top_left.y};     // Superior Esquerdo Externo
   Vector2 pB = {in_top_left.x, in_top_left.y};       // Superior Esquerdo Interno
   Vector2 pC = {in_bottom_right.x, in_top_left.y};   // Superior Direito Interno
   Vector2 pD = {out_bottom_right.x, out_top_left.y}; // Superior Direito Externo
 
-  // Primeiro Triângulo (Esquerdo/Central): ordem anti-horária (A -> B -> C)
   DrawTriangle(pA, pB, pC, color);
-
-  // Segundo Triângulo (Direito/Central): ordem anti-horária (A -> C -> D)
   DrawTriangle(pA, pC, pD, color);
 }
 
 void GameRenderer::drawTrapezoidBottom(Vector2 out_top_left, Vector2 out_bottom_right, Vector2 in_top_left, Vector2 in_bottom_right, Color color)
 {
-  // Define os 4 pontos da face inferior
   Vector2 pA = {out_top_left.x, out_bottom_right.y};     // Inferior Esquerdo Externo
   Vector2 pB = {in_top_left.x, in_bottom_right.y};       // Inferior Esquerdo Interno
   Vector2 pC = {in_bottom_right.x, in_bottom_right.y};   // Inferior Direito Interno
   Vector2 pD = {out_bottom_right.x, out_bottom_right.y}; // Inferior Direito Externo
 
-  // Ordem anti-horária para a face inferior
-  DrawTriangle(pA, pC, pB, color);
-  DrawTriangle(pA, pD, pC, color);
-}
-
-void GameRenderer::drawTrapezoidLeft(Vector2 out_top_left, Vector2 out_bottom_right, Vector2 in_top_left, Vector2 in_bottom_right, Color color)
-{
-  // Define os 4 pontos da face esquerda
-  Vector2 pA = {out_top_left.x, out_top_left.y};     // Superior Esquerdo Externo
-  Vector2 pB = {out_top_left.x, out_bottom_right.y}; // Inferior Esquerdo Externo
-  Vector2 pC = {in_top_left.x, in_bottom_right.y};   // Inferior Esquerdo Interno
-  Vector2 pD = {in_top_left.x, in_top_left.y};       // Superior Esquerdo Interno
-
-  // Ordem anti-horária para a face esquerda
-  DrawTriangle(pA, pC, pB, color);
-  DrawTriangle(pA, pD, pC, color);
-}
-
-void GameRenderer::drawTrapezoidRight(Vector2 out_top_left, Vector2 out_bottom_right, Vector2 in_top_left, Vector2 in_bottom_right, Color color)
-{
-  // Define os 4 pontos da face direita
-  Vector2 pA = {out_bottom_right.x, out_top_left.y};     // Superior Direito Externo
-  Vector2 pB = {in_bottom_right.x, in_top_left.y};       // Superior Direito Interno
-  Vector2 pC = {in_bottom_right.x, in_bottom_right.y};   // Inferior Direito Interno
-  Vector2 pD = {out_bottom_right.x, out_bottom_right.y}; // Inferior Direito Externo
-
-  // Ordem anti-horária para a face direita
   DrawTriangle(pA, pC, pB, color);
   DrawTriangle(pA, pD, pC, color);
 }
@@ -268,11 +234,19 @@ void GameRenderer::drawClearCounts()
   DrawText(TextFormat("DOUBLES = %d", clears[1]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 50, 30, WHITE);
   DrawText(TextFormat("TRIPLES = %d", clears[2]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 100, 30, WHITE);
   DrawText(TextFormat("TETRIS  = %d", clears[3]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 150, 30, WHITE);
+
+  auto high_clears = game.getHighClearCounts();
+
+  DrawText(TextFormat("HIGHEST SINGLES = %d", high_clears[0]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 200, 30, WHITE);
+  DrawText(TextFormat("HIGHEST DOUBLES = %d", high_clears[1]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 250, 30, WHITE);
+  DrawText(TextFormat("HIGHEST TRIPLES = %d", high_clears[2]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 300, 30, WHITE);
+  DrawText(TextFormat("HIGHEST TETRIS  = %d", high_clears[3]), SCREEN_WIDTH / 2 + 65, SCREEN_HEIGHT / 2 + 350, 30, WHITE);
 }
 
 void GameRenderer::drawScoreText()
 {
   DrawText(TextFormat("SCORE = %d", game.getScore()), SCREEN_WIDTH / 2 - 260, SCREEN_HEIGHT / 2 - 375, 30, WHITE);
+  DrawText(TextFormat("HIGHSCORE = %d", game.getHighScore()), SCREEN_WIDTH / 2 - 260, SCREEN_HEIGHT / 2 - 400, 30, WHITE);
 }
 
 void GameRenderer::closeWindow()

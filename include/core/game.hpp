@@ -29,15 +29,21 @@ private:
   int lines_cleared = 0;
   int lines_cleared_last = 0;
 
+  int score = 0;
+  int high_score = 0;
+
   unsigned int single_line_clears = 0;
   unsigned int double_line_clears = 0;
   unsigned int triple_line_clears = 0;
   unsigned int tetris_line_clears = 0;
 
+  unsigned int high_single_line_clears = 0;
+  unsigned int high_double_line_clears = 0;
+  unsigned int high_triple_line_clears = 0;
+  unsigned int high_tetris_line_clears = 0;
+
   float last_landing_height = 0.0f;
   int last_eroded_piece_cells = 0;
-
-  int score = 0;
 
   std::array<Position, 4> last_piece_placed_positions{
       Position(0, 0),
@@ -63,12 +69,15 @@ public:
 
   int getClearedLines();
   int getLinesClearedLast() const;
+
   std::array<unsigned int, 4> getClearCounts();
+  std::array<unsigned int, 4> getHighClearCounts();
 
   float getLastLandingHeight() const;
   int getLastErodedPieceCells() const;
 
   int getScore();
+  int getHighScore();
 
   std::vector<int> getGameState();
 
@@ -81,7 +90,6 @@ public:
   std::array<Position, 4> getLastPiecePlacedPositions() const;
 
   void increaseScore(int lines);
-  void resetScore();
 
   void setGravity(bool on);
   void tickGravity();
@@ -93,6 +101,8 @@ public:
   int pieceWasSet();
 
   void gameLost();
+
+  void resetScore();
 
   ~Game();
 };

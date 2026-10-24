@@ -11,8 +11,8 @@
 Implement wall kicks
 */
 
-Game::Game(int _id, int seed) 
-: piece_queue(seed) 
+Game::Game(int _id, int seed)
+    : piece_queue(seed)
 {
 
     id = _id;
@@ -39,6 +39,10 @@ int Game::getScore()
     return score;
 }
 
+int Game::getHighScore() {
+    return high_score;
+}
+
 PieceQueue &Game::getPieceQueue()
 {
     return piece_queue;
@@ -62,15 +66,6 @@ const Board &Game::getBoard() const
 std::array<Position, 4> Game::getLastPiecePlacedPositions() const
 {
     return last_piece_placed_positions;
-}
-
-#pragma endregion
-
-#pragma region SETTERS
-
-void Game::resetScore()
-{
-    score = 0;
 }
 
 #pragma endregion
@@ -139,6 +134,18 @@ std::array<unsigned int, 4> Game::getClearCounts()
     clears[3] = tetris_line_clears;
 
     return clears;
+}
+
+std::array<unsigned int, 4> Game::getHighClearCounts()
+{
+    std::array<unsigned int, 4> high_clears{};
+
+    high_clears[0] = high_single_line_clears;
+    high_clears[1] = high_double_line_clears;
+    high_clears[2] = high_triple_line_clears;
+    high_clears[3] = high_tetris_line_clears;
+
+    return high_clears;
 }
 
 int Game::getClearedLines()
@@ -256,11 +263,42 @@ void Game::setGravity(bool on)
 void Game::gameLost()
 {
     lost = true;
+    
+    if (score > high_score) {
+        high_score = score;
+    }
+    
+    if (single_line_clears > high_single_line_clears) {
+        high_single_line_clears = single_line_clears;
+    }
+
+    if (double_line_clears > high_double_line_clears) {
+        high_double_line_clears = double_line_clears;
+    }
+
+    if (triple_line_clears > high_triple_line_clears) {
+        high_triple_line_clears = triple_line_clears;
+    }
+
+    if (tetris_line_clears > high_tetris_line_clears) {
+        high_tetris_line_clears = tetris_line_clears;
+    }
+
+    resetScore();
     game_board.clearBoard();
     piece_queue.generatePieceQueue();
     game_board.setPiece(static_cast<PieceType>(getPieceQueue().getPieceQueue().at(0)));
     piece_queue.updatePieceQueue();
     game_board.setTetrominoCellsStates(CellState::ACTIVE, game_board.getBoardTetromino().getAllPositions());
+}
+
+void Game::resetScore()
+{
+    score = 0;
+    single_line_clears = 0;
+    double_line_clears = 0;
+    triple_line_clears = 0;
+    tetris_line_clears = 0;
 }
 
 // TODO: Make gravity work
