@@ -32,7 +32,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/core
