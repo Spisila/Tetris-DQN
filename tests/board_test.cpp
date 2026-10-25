@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include <board.hpp>
-#include <game.hpp>
+#include <tetris.hpp>
 
 TEST(BoardTests, moveTetromino_validMove)
 {
@@ -233,8 +232,4 @@ TEST(BoardTests, clearLines_noLinesCleared)
     b.clearBoard();
 
     EXPECT_EQ(0, b.clearLines());
-}
-
-TEST(BoardTests, name)
-{
 }

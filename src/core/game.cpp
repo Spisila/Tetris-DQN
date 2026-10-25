@@ -75,8 +75,6 @@ void Game::hardDrop()
 
     Tetromino &t = game_board.getBoardTetromino();
 
-    int counter = 0;
-
     while (true)
     {
         game_board.setTetrominoCellsStates(CellState::EMPTY, t.getAllPositions());

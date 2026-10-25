@@ -64,6 +64,7 @@ include(GoogleTest)
 
 add_executable(GEORGE_TESTS
     tests/board_test.cpp
+    tests/game_test.cpp
     ${CORE_SOURCES}
 )
 
