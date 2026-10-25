@@ -1,10 +1,14 @@
 #include <gtest/gtest.h>
 #include <tetris.hpp>
 
-TEST(BoardTests, moveTetromino_validMove)
+class BoardTests : public ::testing::Test
 {
+protected:
     Board b{};
+};
 
+TEST_F(BoardTests, moveTetromino_validMove)
+{
     b.clearBoard();
 
     b.setPiece(PieceType::I_PIECE_0);
@@ -12,10 +16,8 @@ TEST(BoardTests, moveTetromino_validMove)
     EXPECT_TRUE(b.moveTetromino(MovementDirection::RIGHT));
 }
 
-TEST(BoardTests, moveTetromino_invalidMove)
+TEST_F(BoardTests, moveTetromino_invalidMove)
 {
-    Board b{};
-
     b.clearBoard();
 
     b.setPiece(PieceType::I_PIECE_0);
@@ -31,9 +33,8 @@ TEST(BoardTests, moveTetromino_invalidMove)
     EXPECT_FALSE(b.moveTetromino(MovementDirection::RIGHT));
 }
 
-TEST(BoardTests, rotateTetromino_validMove)
+TEST_F(BoardTests, rotateTetromino_validMove)
 {
-    Board b{};
 
     b.clearBoard();
 
@@ -42,9 +43,8 @@ TEST(BoardTests, rotateTetromino_validMove)
     EXPECT_TRUE(b.rotateTetromino(Rotation::CLOCKWISE));
 }
 
-TEST(BoardTests, rotateTetromino_invalidMove)
+TEST_F(BoardTests, rotateTetromino_invalidMove)
 {
-    Board b{};
 
     b.clearBoard();
 
@@ -61,10 +61,8 @@ TEST(BoardTests, rotateTetromino_invalidMove)
     EXPECT_FALSE(b.rotateTetromino(Rotation::CLOCKWISE));
 }
 
-TEST(BoardTests, setPiece_returnFalse)
+TEST_F(BoardTests, setPiece_returnFalse)
 {
-
-    Board b{};
 
     std::array<Position, 4> filled_spawn_position{
         Position{5, 1},
@@ -77,10 +75,8 @@ TEST(BoardTests, setPiece_returnFalse)
     EXPECT_FALSE(b.setPiece(PieceType::I_PIECE_0));
 }
 
-TEST(BoardTests, setPiece_returnTrue)
+TEST_F(BoardTests, setPiece_returnTrue)
 {
-
-    Board b{};
 
     std::array<Position, 4> clear_spawn_position{
         Position{5, 1},
@@ -93,9 +89,8 @@ TEST(BoardTests, setPiece_returnTrue)
     EXPECT_TRUE(b.setPiece(PieceType::I_PIECE_0));
 }
 
-TEST(BoardTests, checkOutOfLateralBounds_invalidPositions)
+TEST_F(BoardTests, checkOutOfLateralBounds_invalidPositions)
 {
-    Board b{};
 
     std::array<Position, 4> out_of_bounds_left{
         Position{-1, 5},
@@ -120,10 +115,8 @@ TEST(BoardTests, checkOutOfLateralBounds_invalidPositions)
     EXPECT_TRUE(b.checkOutOfLateralBounds(out_of_bounds_down));
 }
 
-TEST(BoardTests, checkOutOfLateralBounds_validPositions)
+TEST_F(BoardTests, checkOutOfLateralBounds_validPositions)
 {
-
-    Board b{};
 
     std::array<Position, 4> in_bounds_pos{
         Position{2, 1},
@@ -134,10 +127,8 @@ TEST(BoardTests, checkOutOfLateralBounds_validPositions)
     EXPECT_FALSE(b.checkOutOfLateralBounds(in_bounds_pos));
 }
 
-TEST(BoardTests, checkCollisions_validPositions)
+TEST_F(BoardTests, checkCollisions_validPositions)
 {
-
-    Board b{};
 
     std::array<Position, 4> in_bounds_pos{
         Position{2, 1},
@@ -153,10 +144,8 @@ TEST(BoardTests, checkCollisions_validPositions)
     EXPECT_FALSE(b.checkOutOfLateralBounds(in_bounds_pos));
 }
 
-TEST(BoardTests, checkCollisions_invalidPositions)
+TEST_F(BoardTests, checkCollisions_invalidPositions)
 {
-
-    Board b{};
 
     std::array<Position, 4> in_bounds_pos{
         Position{2, 1},
@@ -169,10 +158,8 @@ TEST(BoardTests, checkCollisions_invalidPositions)
     EXPECT_FALSE(b.checkOutOfLateralBounds(in_bounds_pos));
 }
 
-TEST(BoardTests, chechTouchedFloor_validPositions)
+TEST_F(BoardTests, chechTouchedFloor_validPositions)
 {
-
-    Board b{};
 
     std::array<Position, 4> in_bounds_pos{
         Position{2, 1},
@@ -183,10 +170,8 @@ TEST(BoardTests, chechTouchedFloor_validPositions)
     EXPECT_FALSE(b.checkTouchedFloor(in_bounds_pos));
 }
 
-TEST(BoardTests, chechTouchedFloor_invalidPositions)
+TEST_F(BoardTests, chechTouchedFloor_invalidPositions)
 {
-
-    Board b{};
 
     std::array<Position, 4> out_of_bounds_pos{
         Position{2, BOARD_SIZE_Y + 1},
@@ -197,10 +182,8 @@ TEST(BoardTests, chechTouchedFloor_invalidPositions)
     EXPECT_TRUE(b.checkTouchedFloor(out_of_bounds_pos));
 }
 
-TEST(BoardTests, clearLines_LinesCleared)
+TEST_F(BoardTests, clearLines_LinesCleared)
 {
-
-    Board b{};
     for (int line = BOARD_SIZE_Y - 4; line < BOARD_SIZE_Y; line++)
     {
         for (int column = 0; column < 8; column += 4)
@@ -224,12 +207,8 @@ TEST(BoardTests, clearLines_LinesCleared)
     EXPECT_EQ(4, b.clearLines());
 }
 
-TEST(BoardTests, clearLines_noLinesCleared)
+TEST_F(BoardTests, clearLines_noLinesCleared)
 {
-
-    Board b{};
-
     b.clearBoard();
-
     EXPECT_EQ(0, b.clearLines());
 }
